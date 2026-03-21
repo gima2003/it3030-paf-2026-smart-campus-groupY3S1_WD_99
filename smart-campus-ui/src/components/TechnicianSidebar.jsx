@@ -1,0 +1,44 @@
+import { Link, useLocation } from "react-router-dom";
+
+function TechnicianSidebar() {
+  const location = useLocation();
+
+  const linkClass = (path) =>
+    `block px-4 py-2 rounded-lg transition ${
+      location.pathname === path
+        ? "bg-[#0A6ED3] text-white"
+        : "text-gray-400 hover:bg-[#0B1220] hover:text-white"
+    }`;
+
+  return (
+    <div className="w-64 bg-[#000919] border-r border-white/10 p-6 min-h-screen">
+
+      <h2 className="text-xl font-bold text-white mb-8">
+        Smart Campus 360
+        <span className="block text-sm text-gray-400 mt-1">
+          Technician Panel
+        </span>
+      </h2>
+
+      <nav className="space-y-3">
+        <Link className={linkClass("/technician")} to="/technician">
+          Dashboard
+        </Link>
+
+        <Link className={linkClass("/technician/tickets")} to="/technician/tickets">
+          My Tickets
+        </Link>
+
+        <Link className={linkClass("/technician/history")} to="/technician/history">
+          History
+        </Link>
+
+        <Link className={linkClass("/technician/notifications")} to="/technician/notifications">
+          Notifications
+        </Link>
+      </nav>
+    </div>
+  );
+}
+
+export default TechnicianSidebar;
