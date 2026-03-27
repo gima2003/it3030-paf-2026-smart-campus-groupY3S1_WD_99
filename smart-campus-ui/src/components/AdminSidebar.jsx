@@ -41,7 +41,7 @@ function AdminSidebar() {
         </Link>
 
         <Link className={linkClass("/admin/technicians")} to="/admin/technicians">
-          Technicians
+          Technicians Management
         </Link>
 
         <Link className={linkClass("/admin/notifications")} to="/admin/notifications">
