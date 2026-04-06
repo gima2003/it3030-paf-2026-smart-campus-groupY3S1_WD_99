@@ -1,54 +1,31 @@
-package com.smartcampus.smart_campus_api.entity;
+package com.smartcampus.smart_campus_api.dto;
 
-import jakarta.persistence.*;
+import com.smartcampus.smart_campus_api.entity.ResourceStatus;
+import com.smartcampus.smart_campus_api.entity.ResourceType;
+
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "resources")
-public class Resource {
+public class ResourceResponseDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "resource_code", nullable = false, unique = true, length = 50)
     private String resourceCode;
-
-    @Column(name = "name", nullable = false, length = 100)
     private String name;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 50)
     private ResourceType type;
-
-    @Column(name = "description", length = 500)
     private String description;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 50)
     private ResourceStatus status;
-
-    @Column(name = "is_bookable", nullable = false)
-    private Boolean isBookable = true;
-
-    @Column(name = "location", length = 150)
+    private Boolean isBookable;
     private String location;
-
-    @Column(name = "capacity")
     private Integer capacity;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public Resource() {
+    public ResourceResponseDTO() {
     }
 
-    public Resource(Long id, String resourceCode, String name, ResourceType type, String description,
-                    ResourceStatus status, Boolean isBookable, String location, Integer capacity,
-                    LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public ResourceResponseDTO(Long id, String resourceCode, String name, ResourceType type,
+                               String description, ResourceStatus status, Boolean isBookable,
+                               String location, Integer capacity,
+                               LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.resourceCode = resourceCode;
         this.name = name;
@@ -60,26 +37,6 @@ public class Resource {
         this.capacity = capacity;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
-
-        if (this.status == null) {
-            this.status = ResourceStatus.ACTIVE;
-        }
-
-        if (this.isBookable == null) {
-            this.isBookable = true;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -134,8 +91,8 @@ public class Resource {
         return isBookable;
     }
 
-    public void setIsBookable(Boolean bookable) {
-        isBookable = bookable;
+    public void setIsBookable(Boolean isBookable) {
+        this.isBookable = isBookable;
     }
 
     public String getLocation() {
@@ -160,5 +117,13 @@ public class Resource {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
