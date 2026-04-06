@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import AdminLayout from "./pages/AdminLayout";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminTickets from "./pages/AdminTickets";
+import AdminTechnicians from "./pages/AdminTechnicians";
+
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -57,7 +59,7 @@ function App() {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="tickets" element={<AdminTickets />} />
-       
+        <Route path="technicians" element={<AdminTechnicians />} />
       </Route>
 
       {/* STUDENT */}
