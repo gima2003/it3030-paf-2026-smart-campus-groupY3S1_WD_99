@@ -1,35 +1,65 @@
+import { useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 import { FaBell, FaUserCircle } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import ProfileModal from "./ProfileModal";
 
 function TechnicianNavbar() {
-  const navigate = useNavigate();
+  const { user, setUser, logout, fetchUser } = useContext(AuthContext);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/login";
   };
 
   return (
-    <div className="flex justify-between items-center px-6 py-4 bg-[#000919] border-b border-white/10">
+    <>
+      <div className="h-16 bg-[#000919] border-b border-white/10 px-6 flex justify-between items-center relative z-40">
 
-      <h1 className="text-white text-lg font-semibold">
-        Technician Dashboard
-      </h1>
+        {/* Title */}
+        <h3 className="text-lg font-semibold text-white">
+          Technician Dashboard
+        </h3>
 
-      <div className="flex items-center gap-5 text-white">
+        {/* Right Side */}
+        <div className="flex items-center gap-6">
 
-        <FaBell className="cursor-pointer" size={18} />
-        <FaUserCircle size={22} />
+          {/* User Info */}
+          {user && (
+            <div className="hidden md:flex flex-col items-end">
+              <span className="text-sm font-medium text-white">{user.firstName} {user.lastName}</span>
+              <span className="text-xs text-gray-400">ID: {user.employeeId}</span>
+            </div>
+          )}
 
-        <button
-          onClick={handleLogout}
-          className="bg-[#0A6ED3] px-4 py-1 rounded-lg hover:bg-[#054E98]"
-        >
-          Logout
-        </button>
+          {/* Notification */}
+          <FaBell className="text-gray-400 text-xl cursor-pointer hover:text-white transition" />
 
+          {/* Profile */}
+          <FaUserCircle 
+            onClick={() => setIsProfileOpen(true)}
+            className="text-gray-400 text-2xl cursor-pointer hover:text-white transition transform hover:scale-110" 
+          />
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="bg-[#0A6ED3] text-white px-4 py-2 rounded-lg hover:bg-[#054E98] transition"
+          >
+            Logout
+          </button>
+
+        </div>
       </div>
-    </div>
+      
+      {/* Profile Modal */}
+      <ProfileModal 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+        user={user} 
+        onUpdateSuccess={(updatedUser) => setUser(updatedUser)} 
+      />
+    </>
   );
 }
 

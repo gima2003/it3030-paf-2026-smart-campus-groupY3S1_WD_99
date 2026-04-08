@@ -1,105 +1,75 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useEffect, useState, useContext } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { FcGoogle } from "react-icons/fc";
 
 function Login() {
   const navigate = useNavigate();
-
-  const [form, setForm] = useState({
-    email: "",
-    password: ""
-  });
+  const location = useLocation();
+  const { login } = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
-  };
+  useEffect(() => {
+    // Check if we are returning from Google OAuth with a token
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+    const roleParam = params.get("role");
+    const errParam = params.get("error");
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+    if (errParam) {
+      setError(errParam);
+    } else if (token && roleParam) {
+      setSuccess("Login successful! Redirecting...");
+      login(token, roleParam);
 
-    if (!form.email || !form.password) {
-      setError("Please enter email and password");
-      return;
+      // Give animation/popup some time before redirecting
+      setTimeout(() => {
+        if (roleParam === "ADMIN") {
+          navigate("/admin");
+        } else if (roleParam === "STUDENT") {
+          navigate("/student");
+        } else if (roleParam === "TECHNICIAN") {
+          navigate("/technician");
+        } else if (roleParam === "MANAGER") {
+          navigate("/manager"); // Assuming Manager route will exist
+        } else if (roleParam === "LECTURER") {
+          navigate("/lecturer"); // Assuming Lecturer route will exist
+        } else {
+          setError("Unknown role: " + roleParam);
+        }
+      }, 1500);
     }
+  }, [location, login, navigate]);
 
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await axios.post(
-        "http://localhost:8081/api/auth/login",
-        form
-      );
-
-      // 🔥 Normalize role (IMPORTANT)
-      const role = response.data.role?.toUpperCase();
-
-      console.log("Logged Role:", role);
-
-      if (!role || role === "INVALID") {
-        setError("Invalid credentials");
-        return;
-      }
-
-      // 🔥 Save role
-      localStorage.setItem("role", role);
-      localStorage.setItem("email", form.email);
-
-      // 🔥 ROLE-BASED REDIRECTION (FIXED)
-      if (role === "ADMIN") {
-        navigate("/admin");
-      } else if (role === "STUDENT") {
-        navigate("/student");
-      } else if (role === "TECHNICIAN") {
-        navigate("/technician");
-      } else {
-        setError("Unknown role");
-      }
-
-    } catch (error) {
-      console.error(error);
-      setError("Server error. Try again.");
-    } finally {
-      setLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    setLoading(true);
+    // Redirect browser to Spring Boot OAuth2 endpoint
+    window.location.href = "http://localhost:8081/oauth2/authorization/google";
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
         <h2 style={styles.title}>Smart Campus Login</h2>
+        <p style={{ textAlign: "center", color: "#666", marginBottom: "30px", fontSize: "14px" }}>
+          Please sign in using your campus Google account.
+        </p>
 
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Enter your email"
-            value={form.email}
-            onChange={handleChange}
-            style={styles.input}
-          />
+        {error && <div style={styles.errorPopup}>{error.replace(/_/g, ' ')}</div>}
+        {success && <div style={styles.successPopup}>{success}</div>}
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Enter your password"
-            value={form.password}
-            onChange={handleChange}
-            style={styles.input}
-          />
-
-          {error && <p style={styles.error}>{error}</p>}
-
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+        <button 
+          onClick={handleGoogleLogin} 
+          style={styles.googleButton} 
+          disabled={loading || success}
+          className="hover:shadow-lg transition-transform hover:scale-105"
+        >
+          <FcGoogle size={24} style={{ marginRight: "10px" }} />
+          {loading ? "Redirecting to Google..." : "Sign in with Google"}
+        </button>
       </div>
     </div>
   );
@@ -118,35 +88,50 @@ const styles = {
     background: "#ffffff",
     padding: "40px",
     borderRadius: "12px",
-    width: "350px",
+    width: "380px",
     boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
   },
   title: {
     textAlign: "center",
-    marginBottom: "30px"
+    marginBottom: "10px",
+    color: "#000919",
+    fontWeight: "600",
+    fontSize: "24px"
   },
-  input: {
+  googleButton: {
     width: "100%",
-    padding: "10px",
-    marginBottom: "15px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "14px"
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    backgroundColor: "#0A6ED3",
-    color: "#fff",
-    border: "none",
+    padding: "12px",
+    backgroundColor: "#fff",
+    color: "#333",
+    border: "1px solid #ddd",
     borderRadius: "6px",
     cursor: "pointer",
-    fontSize: "15px"
+    fontSize: "16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "500",
+    transition: "all 0.2s ease"
   },
-  error: {
-    color: "red",
-    fontSize: "13px",
-    marginBottom: "10px"
+  errorPopup: {
+    backgroundColor: "#FEE2E2",
+    color: "#B91C1C",
+    padding: "12px",
+    borderRadius: "6px",
+    marginBottom: "20px",
+    fontSize: "14px",
+    textAlign: "center",
+    border: "1px solid #F87171"
+  },
+  successPopup: {
+    backgroundColor: "#D1FAE5",
+    color: "#065F46",
+    padding: "12px",
+    borderRadius: "6px",
+    marginBottom: "20px",
+    fontSize: "14px",
+    textAlign: "center",
+    border: "1px solid #34D399"
   }
 };
 

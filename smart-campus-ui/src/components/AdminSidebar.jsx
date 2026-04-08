@@ -28,6 +28,10 @@ function AdminSidebar() {
           Dashboard
         </Link>
 
+        <Link className={linkClass("/admin/users")} to="/admin/users">
+          User Management
+        </Link>
+
         <Link className={linkClass("/admin/resources")} to="/admin/resources">
           Facilities & Assets
         </Link>
