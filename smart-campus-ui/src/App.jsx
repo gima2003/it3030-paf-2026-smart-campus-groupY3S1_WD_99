@@ -13,6 +13,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminTickets from "./pages/AdminTickets";
 import AdminTechnicians from "./pages/AdminTechnicians";
 import AdminUserManagement from "./pages/AdminUserManagement";
+import ResourceManagement from "./pages/ResourceManagement";
+
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -63,7 +65,35 @@ function App() {
           {/* LOGIN */}
           <Route path="/login" element={<Login />} />
 
-          {/* ADMIN */}
+      {/* ADMIN */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRole="ADMIN">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="tickets" element={<AdminTickets />} />
+        <Route path="technicians" element={<AdminTechnicians />} />
+        <Route path="/admin/resources" element={<ResourceManagement />} />
+      </Route>
+
+      {/* STUDENT */}
+      <Route
+        path="/student"
+        element={
+          <ProtectedRoute allowedRole="STUDENT">
+            <StudentLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<StudentDashboard />} />
+        <Route path="tickets" element={<StudentTickets />} />
+      </Route>
+
+      {/* 🔥 FALLBACK (IMPORTANT) */}
           <Route
             path="/admin"
             element={
