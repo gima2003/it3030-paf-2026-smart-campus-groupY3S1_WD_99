@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import ProfileModal from "./ProfileModal";
@@ -7,6 +7,17 @@ function AdminNavbar() {
   const { user, setUser, logout, fetchUser } = useContext(AuthContext);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -37,7 +48,7 @@ function AdminNavbar() {
           <FaBell className="text-gray-400 text-xl cursor-pointer hover:text-white transition" />
 
           {/* Profile Dropdown Container */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-2 text-gray-400 hover:text-white transition focus:outline-none"
@@ -46,36 +57,64 @@ function AdminNavbar() {
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-4 w-56 bg-white rounded-xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute right-0 mt-4 w-64 bg-[#0B1220] rounded-xl shadow-2xl border border-white/10 py-2 z-50 transform origin-top-right transition-all animate-in fade-in zoom-in-95 duration-200">
                 
-                <button 
-                  onClick={() => { setIsProfileOpen(true); setIsDropdownOpen(false); }}
-                  className="w-full text-left px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition"
-                >
-                  <span className="text-lg">👤</span> My Profile
-                </button>
-
-                <div className="px-5 py-2 mt-1">
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Security Settings</div>
-                  {!user?.mfaEnabled ? (
-                    <a 
-                      href="/mfa-setup" 
-                      className="w-full text-left py-2 text-sm text-gray-700 hover:text-blue-600 flex items-center gap-2 transition"
-                    >
-                      🛡️ Enable 2FA
-                    </a>
-                  ) : (
-                    <div className="w-full text-left py-2 text-sm text-green-600 flex items-center gap-2 font-medium">
-                      ✅ 2FA Enabled
-                    </div>
-                  )}
+                {/* User Info Header */}
+                <div className="px-5 py-3 border-b border-white/10">
+                  <div className="text-sm font-semibold text-white">{user?.firstName} {user?.lastName}</div>
+                  <div className="text-xs text-gray-400 mt-0.5 truncate">{user?.email}</div>
                 </div>
 
-                <div className="border-t border-gray-100 my-1"></div>
+                <div className="py-1">
+                  <button 
+                    onClick={() => { setIsProfileOpen(true); setIsDropdownOpen(false); }}
+                    className="w-full text-left px-5 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-3 transition"
+                  >
+                    <span className="text-lg">👤</span> My Profile
+                  </button>
+
+                  <div className="px-5 py-2 mt-1">
+                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Security Settings</div>
+                    
+                    {/* MFA Logic: Only for ADMIN and STUDENT */}
+                    {(user?.role === "ADMIN" || user?.role === "STUDENT") && (
+                      !user?.mfaEnabled ? (
+                        <a 
+                          href="/mfa-setup" 
+                          className="w-full text-left py-2 px-3 -mx-3 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-2 transition"
+                        >
+                          🛡️ Enable 2FA
+                        </a>
+                      ) : (
+                        <div className="flex flex-col gap-1 -mx-3">
+                          <div className="w-full text-left py-2 px-3 rounded-lg text-sm text-green-400 flex items-center gap-2 font-medium bg-green-400/10 border border-green-400/20">
+                            ✅ 2FA Enabled
+                          </div>
+                          <button 
+                            onClick={() => {
+                              alert("Disable 2FA logic is to be implemented.");
+                              setIsDropdownOpen(false);
+                            }}
+                            className="w-full text-left py-2 px-3 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 flex items-center gap-2 transition"
+                          >
+                            ⚠️ Disable 2FA
+                          </button>
+                        </div>
+                      )
+                    )}
+
+                    {/* Hide setting for Technician/Manager/Lecturer */}
+                    {user?.role !== "ADMIN" && user?.role !== "STUDENT" && (
+                       <span className="text-xs text-gray-500 italic block py-1">Managed by Administrator</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 my-1"></div>
                 
                 <button 
                   onClick={handleLogout}
-                  className="w-full text-left px-5 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition font-medium"
+                  className="w-full text-left px-5 py-2.5 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 flex items-center gap-3 transition font-medium"
                 >
                   <span className="text-lg">🚪</span> Logout
                 </button>
