@@ -27,10 +27,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         java.util.Optional<com.smartcampus.smart_campus_api.entity.User> userOpt = userRepository.findByEmail(email);
 
         if (userOpt.isPresent() && Boolean.TRUE.equals(userOpt.get().getMfaEnabled())) {
-            String mfaToken = tokenProvider.generateMfaToken(email);
-            String redirectUrl = "http://localhost:5173/login?mfaToken=" + mfaToken;
-            getRedirectStrategy().sendRedirect(request, response, redirectUrl);
-            return;
+            String roleStr = userOpt.get().getRole();
+            if ("ADMIN".equals(roleStr) || "STUDENT".equals(roleStr) || "TECHNICIAN".equals(roleStr)) {
+                String mfaToken = tokenProvider.generateMfaToken(email);
+                String redirectUrl = "http://localhost:5173/login?mfaToken=" + mfaToken;
+                getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+                return;
+            }
         }
 
         String token = tokenProvider.generateToken(authentication);
