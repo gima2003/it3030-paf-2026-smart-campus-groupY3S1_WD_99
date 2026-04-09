@@ -139,4 +139,24 @@ public class AuthController {
             return ResponseEntity.status(500).body("Error verifying MFA: " + e.getMessage());
         }
     }
+
+    @PostMapping("/mfa/disable")
+    public ResponseEntity<?> disableMfa(Authentication authentication) {
+        try {
+            if (authentication == null || authentication.getName() == null) {
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+            Optional<User> userOpt = userRepository.findByEmail(authentication.getName());
+            if (userOpt.isEmpty()) return ResponseEntity.status(404).body("User not found");
+
+            User user = userOpt.get();
+            user.setMfaEnabled(false);
+            user.setMfaSecret(null);
+            userRepository.save(user);
+
+            return ResponseEntity.ok("MFA Disabled successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error disabling MFA: " + e.getMessage());
+        }
+    }
 }

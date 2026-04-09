@@ -2,9 +2,12 @@ import { useState, useContext, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import ProfileModal from "./ProfileModal";
+import axios from "axios";
+import { useToast } from "../context/ToastContext";
 
 function AdminNavbar() {
-  const { user, setUser, logout, fetchUser } = useContext(AuthContext);
+  const { user, setUser, logout, fetchUser, token } = useContext(AuthContext);
+  const { showToast } = useToast();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -22,6 +25,21 @@ function AdminNavbar() {
   const handleLogout = async () => {
     await logout();
     window.location.href = "/";
+  };
+
+  const handleDisableMfa = async () => {
+    try {
+      if (window.confirm("Are you sure you want to disable Two-Factor Authentication?")) {
+        await axios.post("http://localhost:8081/api/auth/mfa/disable", {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        showToast("MFA has been successfully disabled.", "success");
+        fetchUser(); // Refresh user state
+        setIsDropdownOpen(false);
+      }
+    } catch (err) {
+      showToast(err.response?.data || "Failed to disable MFA.", "error");
+    }
   };
 
   return (
@@ -91,10 +109,7 @@ function AdminNavbar() {
                             ✅ 2FA Enabled
                           </div>
                           <button 
-                            onClick={() => {
-                              alert("Disable 2FA logic is to be implemented.");
-                              setIsDropdownOpen(false);
-                            }}
+                            onClick={handleDisableMfa}
                             className="w-full text-left py-2 px-3 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 flex items-center gap-2 transition"
                           >
                             ⚠️ Disable 2FA
