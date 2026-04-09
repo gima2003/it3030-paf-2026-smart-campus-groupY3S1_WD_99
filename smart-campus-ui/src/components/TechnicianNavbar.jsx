@@ -2,9 +2,12 @@ import { useState, useContext, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import ProfileModal from "./ProfileModal";
+import axios from "axios";
+import { useToast } from "../context/ToastContext";
 
 function TechnicianNavbar() {
-  const { user, setUser, logout, fetchUser } = useContext(AuthContext);
+  const { user, setUser, logout, fetchUser, token } = useContext(AuthContext);
+  const { showToast } = useToast();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -22,6 +25,21 @@ function TechnicianNavbar() {
   const handleLogout = async () => {
     await logout();
     window.location.href = "/login";
+  };
+
+  const handleDisableMfa = async () => {
+    try {
+      if (window.confirm("Are you sure you want to disable Two-Factor Authentication?")) {
+        await axios.post("http://localhost:8081/api/auth/mfa/disable", {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        showToast("MFA has been successfully disabled.", "success");
+        fetchUser(); // Refresh user state
+        setIsDropdownOpen(false);
+      }
+    } catch (err) {
+      showToast(err.response?.data || "Failed to disable MFA.", "error");
+    }
   };
 
   return (
@@ -76,8 +94,8 @@ function TechnicianNavbar() {
                   <div className="px-5 py-2 mt-1">
                     <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Security Settings</div>
                     
-                    {/* MFA Logic: Only for ADMIN and STUDENT */}
-                    {(user?.role === "ADMIN" || user?.role === "STUDENT") && (
+                    {/* MFA Logic: Ensure TECHNICIAN is included */}
+                    {(user?.role === "ADMIN" || user?.role === "STUDENT" || user?.role === "TECHNICIAN") && (
                       !user?.mfaEnabled ? (
                         <a 
                           href="/mfa-setup" 
@@ -91,10 +109,7 @@ function TechnicianNavbar() {
                             ✅ 2FA Enabled
                           </div>
                           <button 
-                            onClick={() => {
-                              alert("Disable 2FA logic is to be implemented.");
-                              setIsDropdownOpen(false);
-                            }}
+                            onClick={handleDisableMfa}
                             className="w-full text-left py-2 px-3 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 flex items-center gap-2 transition"
                           >
                             ⚠️ Disable 2FA
@@ -103,8 +118,8 @@ function TechnicianNavbar() {
                       )
                     )}
 
-                    {/* Hide setting for Technician/Manager/Lecturer */}
-                    {user?.role !== "ADMIN" && user?.role !== "STUDENT" && (
+                    {/* Hide setting for Manager/Lecturer */}
+                    {user?.role !== "ADMIN" && user?.role !== "STUDENT" && user?.role !== "TECHNICIAN" && (
                        <span className="text-xs text-gray-500 italic block py-1">Managed by Administrator</span>
                     )}
                   </div>
