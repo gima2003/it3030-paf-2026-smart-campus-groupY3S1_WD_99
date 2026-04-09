@@ -49,6 +49,9 @@ function LandingPage() {
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 
+import MfaSetup from "./pages/MfaSetup";
+import MfaVerify from "./pages/MfaVerify";
+
 function App() {
   return (
     <ToastProvider>
@@ -59,9 +62,10 @@ function App() {
 
           {/* LOGIN */}
           <Route path="/login" element={<Login />} />
-
-          {/* LOGIN */}
-          <Route path="/login" element={<Login />} />
+          
+          {/* MFA */}
+          <Route path="/verify-2fa" element={<MfaVerify />} />
+          <Route path="/mfa-setup" element={<MfaSetup />} />
 
           {/* ADMIN */}
           <Route

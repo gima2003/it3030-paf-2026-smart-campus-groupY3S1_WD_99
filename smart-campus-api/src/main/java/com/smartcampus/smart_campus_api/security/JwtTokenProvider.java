@@ -39,4 +39,34 @@ public class JwtTokenProvider {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    public String generateToken(com.smartcampus.smart_campus_api.entity.User user) {
+        String role = "ROLE_" + user.getRole().toUpperCase();
+        
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("role", role)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String generateMfaToken(String email) {
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 1000 * 60 * 5); // 5 minutes
+
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("role", "PRE_AUTH")
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
 }

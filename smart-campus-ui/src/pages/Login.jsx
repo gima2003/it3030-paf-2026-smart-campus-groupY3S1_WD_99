@@ -18,6 +18,12 @@ function Login() {
     const token = params.get("token");
     const roleParam = params.get("role");
     const errParam = params.get("error");
+    const mfaToken = params.get("mfaToken");
+
+    if (mfaToken) {
+      navigate(`/verify-2fa?mfaToken=${mfaToken}`);
+      return;
+    }
 
     if (errParam) {
       setError(errParam);

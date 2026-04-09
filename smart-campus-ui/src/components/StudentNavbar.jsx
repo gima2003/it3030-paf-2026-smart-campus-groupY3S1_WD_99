@@ -41,6 +41,14 @@ function StudentNavbar() {
             className="text-gray-400 text-2xl cursor-pointer hover:text-white transition transform hover:scale-110"
           />
 
+          {/* MFA Button */}
+          <a
+            href="/mfa-setup"
+            className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition text-sm"
+          >
+            Setup 2FA
+          </a>
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}
