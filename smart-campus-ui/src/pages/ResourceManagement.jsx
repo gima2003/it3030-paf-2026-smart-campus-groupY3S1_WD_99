@@ -199,6 +199,73 @@ function ResourceRow({ resource, onEdit, onDelete }) {
   );
 }
 
+function ResourceTableSection({
+  title,
+  resources,
+  loading,
+  emptyMessage,
+  onEdit,
+  onDelete,
+}) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden mb-5">
+      <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+        <h2 className="text-sm font-semibold text-white">{title}</h2>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1000px] text-sm">
+          <thead className="bg-white/5 border-b border-white/10">
+            <tr className="text-left text-xs text-gray-400">
+              {TABLE_HEADERS.map((header) => (
+                <th
+                  key={header}
+                  className={`px-4 py-2.5 font-medium ${
+                    header === "Actions" ? "text-center" : ""
+                  }`}
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {loading ? (
+              <tr>
+                <td
+                  colSpan="8"
+                  className="px-4 py-8 text-center text-sm text-gray-400"
+                >
+                  Loading resources...
+                </td>
+              </tr>
+            ) : resources.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="8"
+                  className="px-4 py-8 text-center text-sm text-gray-400"
+                >
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              resources.map((resource) => (
+                <ResourceRow
+                  key={`${resource.resourceCategory}-${resource.id}`}
+                  resource={resource}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function ResourceManagement() {
   const [resources, setResources] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -320,6 +387,18 @@ function ResourceManagement() {
     });
   }, [resources, searchText, statusFilter, typeFilter]);
 
+  const facilityResources = useMemo(() => {
+    return filteredResources.filter(
+      (resource) => resource.resourceCategory === "FACILITY"
+    );
+  }, [filteredResources]);
+
+  const equipmentResources = useMemo(() => {
+    return filteredResources.filter(
+      (resource) => resource.resourceCategory === "EQUIPMENT"
+    );
+  }, [filteredResources]);
+
   const stats = useMemo(
     () => ({
       total: resources.length,
@@ -392,57 +471,23 @@ function ResourceManagement() {
         </div>
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px] text-sm">
-            <thead className="bg-white/5 border-b border-white/10">
-              <tr className="text-left text-xs text-gray-400">
-                {TABLE_HEADERS.map((header) => (
-                  <th
-                    key={header}
-                    className={`px-4 py-2.5 font-medium ${
-                      header === "Actions" ? "text-center" : ""
-                    }`}
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+      <ResourceTableSection
+        title="Facilities"
+        resources={facilityResources}
+        loading={loading}
+        emptyMessage="No facilities found"
+        onEdit={handleOpenEditForm}
+        onDelete={handleDelete}
+      />
 
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan="8"
-                    className="px-4 py-8 text-center text-sm text-gray-400"
-                  >
-                    Loading resources...
-                  </td>
-                </tr>
-              ) : filteredResources.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="8"
-                    className="px-4 py-8 text-center text-sm text-gray-400"
-                  >
-                    No resources found
-                  </td>
-                </tr>
-              ) : (
-                filteredResources.map((resource) => (
-                  <ResourceRow
-                    key={`${resource.resourceCategory}-${resource.id}`}
-                    resource={resource}
-                    onEdit={handleOpenEditForm}
-                    onDelete={handleDelete}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ResourceTableSection
+        title="Equipment"
+        resources={equipmentResources}
+        loading={loading}
+        emptyMessage="No equipment found"
+        onEdit={handleOpenEditForm}
+        onDelete={handleDelete}
+      />
 
       <ResourceForm
         isOpen={isFormOpen}
