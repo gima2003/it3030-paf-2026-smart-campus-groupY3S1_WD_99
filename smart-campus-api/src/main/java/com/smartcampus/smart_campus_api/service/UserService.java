@@ -89,6 +89,10 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
     public java.util.Map<String, Object> getUserStats() {
         java.util.Map<String, Object> stats = new java.util.HashMap<>();
         stats.put("totalStudents", userRepository.countByRole("STUDENT"));

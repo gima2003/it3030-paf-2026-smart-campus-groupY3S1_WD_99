@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { FaBell, FaUserCircle } from "react-icons/fa";
+import NotificationBell from "./NotificationBell";
 import ProfileModal from "./ProfileModal";
 import axios from "axios";
 import { useToast } from "../context/ToastContext";
@@ -63,7 +64,7 @@ function AdminNavbar() {
           )}
 
           {/* Notification */}
-          <FaBell className="text-gray-400 text-xl cursor-pointer hover:text-white transition" />
+          <NotificationBell rolePrefix="admin" />
 
           {/* Profile Dropdown Container */}
           <div className="relative" ref={dropdownRef}>

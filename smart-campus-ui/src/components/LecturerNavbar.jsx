@@ -1,12 +1,12 @@
 import { useState, useContext, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { FaBell, FaUserCircle } from "react-icons/fa";
+import { FaUserCircle } from "react-icons/fa";
 import NotificationBell from "./NotificationBell";
 import ProfileModal from "./ProfileModal";
 import axios from "axios";
 import { useToast } from "../context/ToastContext";
 
-function TechnicianNavbar() {
+function LecturerNavbar() {
   const { user, setUser, logout, fetchUser, token } = useContext(AuthContext);
   const { showToast } = useToast();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -28,45 +28,20 @@ function TechnicianNavbar() {
     window.location.href = "/login";
   };
 
-  const handleDisableMfa = async () => {
-    try {
-      if (window.confirm("Are you sure you want to disable Two-Factor Authentication?")) {
-        await axios.post("http://localhost:8081/api/auth/mfa/disable", {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        showToast("MFA has been successfully disabled.", "success");
-        fetchUser(); // Refresh user state
-        setIsDropdownOpen(false);
-      }
-    } catch (err) {
-      showToast(err.response?.data || "Failed to disable MFA.", "error");
-    }
-  };
-
   return (
     <>
       <div className="h-16 bg-[#000919] border-b border-white/10 px-6 flex justify-between items-center relative z-40">
-
-        {/* Title */}
         <h3 className="text-lg font-semibold text-white">
-          Technician Dashboard
+          Lecturer Dashboard
         </h3>
-
-        {/* Right Side */}
         <div className="flex items-center gap-6">
-
-          {/* User Info */}
           {user && (
             <div className="hidden md:flex flex-col items-end">
               <span className="text-sm font-medium text-white">{user.firstName} {user.lastName}</span>
               <span className="text-xs text-gray-400">ID: {user.employeeId}</span>
             </div>
           )}
-
-          {/* Notification */}
-          <NotificationBell rolePrefix="technician" />
-
-          {/* Profile Dropdown Container */}
+          <NotificationBell rolePrefix="lecturer" />
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -74,16 +49,12 @@ function TechnicianNavbar() {
             >
               <FaUserCircle className="text-2xl transform transition hover:scale-110" />
             </button>
-
             {isDropdownOpen && (
               <div className="absolute right-0 mt-4 w-64 bg-[#0B1220] rounded-xl shadow-2xl border border-white/10 py-2 z-50 transform origin-top-right transition-all animate-in fade-in zoom-in-95 duration-200">
-                
-                {/* User Info Header */}
                 <div className="px-5 py-3 border-b border-white/10">
                   <div className="text-sm font-semibold text-white">{user?.firstName} {user?.lastName}</div>
                   <div className="text-xs text-gray-400 mt-0.5 truncate">{user?.email}</div>
                 </div>
-
                 <div className="py-1">
                   <button 
                     onClick={() => { setIsProfileOpen(true); setIsDropdownOpen(false); }}
@@ -91,43 +62,14 @@ function TechnicianNavbar() {
                   >
                     <span className="text-lg">👤</span> My Profile
                   </button>
-
                   <div className="px-5 py-2 mt-1">
                     <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Security Settings</div>
-                    
-                    {/* MFA Logic: Ensure TECHNICIAN is included */}
-                    {(user?.role === "ADMIN" || user?.role === "STUDENT" || user?.role === "TECHNICIAN") && (
-                      !user?.mfaEnabled ? (
-                        <a 
-                          href="/mfa-setup" 
-                          className="w-full text-left py-2 px-3 -mx-3 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-2 transition"
-                        >
-                          🛡️ Enable 2FA
-                        </a>
-                      ) : (
-                        <div className="flex flex-col gap-1 -mx-3">
-                          <div className="w-full text-left py-2 px-3 rounded-lg text-sm text-green-400 flex items-center gap-2 font-medium bg-green-400/10 border border-green-400/20">
-                            ✅ 2FA Enabled
-                          </div>
-                          <button 
-                            onClick={handleDisableMfa}
-                            className="w-full text-left py-2 px-3 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 flex items-center gap-2 transition"
-                          >
-                            ⚠️ Disable 2FA
-                          </button>
-                        </div>
-                      )
-                    )}
-
-                    {/* Hide setting for Manager/Lecturer */}
                     {user?.role !== "ADMIN" && user?.role !== "STUDENT" && user?.role !== "TECHNICIAN" && (
                        <span className="text-xs text-gray-500 italic block py-1">Managed by Administrator</span>
                     )}
                   </div>
                 </div>
-
                 <div className="border-t border-white/10 my-1"></div>
-                
                 <button 
                   onClick={handleLogout}
                   className="w-full text-left px-5 py-2.5 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 flex items-center gap-3 transition font-medium"
@@ -137,11 +79,8 @@ function TechnicianNavbar() {
               </div>
             )}
           </div>
-
         </div>
       </div>
-      
-      {/* Profile Modal */}
       <ProfileModal 
         isOpen={isProfileOpen} 
         onClose={() => setIsProfileOpen(false)} 
@@ -152,4 +91,4 @@ function TechnicianNavbar() {
   );
 }
 
-export default TechnicianNavbar;
+export default LecturerNavbar;
