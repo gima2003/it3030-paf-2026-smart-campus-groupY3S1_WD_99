@@ -21,12 +21,17 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
       icon: LayoutDashboard,
     },
     {
+      path: "/admin/users",
+      label: "User Management",
+      icon: Users,
+    },
+    {
       path: "/admin/resources",
       label: "Facilities & Assets",
       icon: Building2,
     },
     {
-      path: "/admin/bookings",
+      path: "/admin/booking-management",
       label: "Booking Management",
       icon: CalendarCheck,
     },
@@ -52,7 +57,8 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
     },
   ];
 
-  const isActivePath = (path) => location.pathname === path;
+  const isActivePath = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
     <aside
@@ -60,7 +66,6 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
         isSidebarOpen ? "w-64" : "w-20"
       }`}
     >
-      {/* Top Section */}
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div
@@ -89,45 +94,34 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
-        
+        {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActivePath(item.path);
 
-        <Link className={linkClass("/admin")} to="/admin">
-          Dashboard
-        </Link>
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`group flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${
+                active
+                  ? "bg-[#0A6ED3] text-white"
+                  : "text-gray-300 hover:bg-[#0B1220] hover:text-white"
+              }`}
+              title={!isSidebarOpen ? item.label : ""}
+            >
+              <Icon size={20} className="shrink-0" />
 
-        <Link className={linkClass("/admin/users")} to="/admin/users">
-          User Management
-        </Link>
-
-        <Link className={linkClass("/admin/resources")} to="/admin/resources">
-          Facilities & Assets
-        </Link>
-
-        <Link className={linkClass("/admin/bookings")} to="/admin/bookings">
-          Booking Management
-        </Link>
-
-        <Link className={linkClass("/admin/tickets")} to="/admin/tickets">
-          Tickets Management
-        </Link>
-
-        <Link className={linkClass("/admin/technicians")} to="/admin/technicians">
-          Technicians Management
-        </Link>
-
-        <Link className={linkClass("/admin/notifications")} to="/admin/notifications">
-          Notifications
-        </Link>
-
-        <Link className={linkClass("/admin/analytics")} to="/admin/analytics">
-          Analytics
-        </Link>
-          
-       
+              <span
+                className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
+                  isSidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
+                }`}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );
