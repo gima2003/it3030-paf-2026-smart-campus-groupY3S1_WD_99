@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useContext } from "react";
 import axios from "axios";
 import {
   FaTools,
@@ -10,10 +10,13 @@ import {
   FaImage,
 } from "react-icons/fa";
 
+import { AuthContext } from "../context/AuthContext";
+
 function TechnicianDashboard() {
   const API = "http://localhost:8081";
 
-  const technicianEmail = localStorage.getItem("email") || "tech01@sliit.lk";
+  const { user } = useContext(AuthContext);
+  const technicianEmail = user?.email || localStorage.getItem("email") || "tech01@sliit.lk";
 
   const [tickets, setTickets] = useState([]);
   const [selectedTicketId, setSelectedTicketId] = useState(null);

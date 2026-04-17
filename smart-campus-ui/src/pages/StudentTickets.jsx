@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import {
   FaUpload,
   FaPaperPlane,
@@ -7,6 +7,7 @@ import {
   FaImage,
 } from "react-icons/fa";
 import axios from "axios";
+import { AuthContext } from "../context/AuthContext";
 
 function StudentTickets() {
   const [activeTab, setActiveTab] = useState("create");
@@ -18,22 +19,20 @@ function StudentTickets() {
       <div className="flex gap-4 mb-8">
         <button
           onClick={() => setActiveTab("create")}
-          className={`px-5 py-2 rounded-lg transition ${
-            activeTab === "create"
+          className={`px-5 py-2 rounded-lg transition ${activeTab === "create"
               ? "bg-[#0A6ED3]"
               : "bg-white/10 hover:bg-white/20"
-          }`}
+            }`}
         >
           Create Ticket
         </button>
 
         <button
           onClick={() => setActiveTab("list")}
-          className={`px-5 py-2 rounded-lg transition ${
-            activeTab === "list"
+          className={`px-5 py-2 rounded-lg transition ${activeTab === "list"
               ? "bg-[#0A6ED3]"
               : "bg-white/10 hover:bg-white/20"
-          }`}
+            }`}
         >
           My Tickets
         </button>
@@ -48,10 +47,11 @@ function StudentTickets() {
 
 function CreateTicketForm() {
   const API = "http://localhost:8081";
+  const { user } = useContext(AuthContext);
 
   const [form, setForm] = useState({
     itNumber: "",
-    email: "",
+    email: user?.email || localStorage.getItem("email") || "",
     title: "",
     description: "",
     category: "Electrical",
@@ -65,7 +65,6 @@ function CreateTicketForm() {
   const [loading, setLoading] = useState(false);
 
   const itPattern = /^(IT|it)\d{8}$/;
-  const emailPattern = /^(IT|it)\d{8}@my\.sliit\.lk$/;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -79,8 +78,8 @@ function CreateTicketForm() {
       newErrors.itNumber = "Format: IT12345678";
     }
 
-    if (!emailPattern.test(form.email)) {
-      newErrors.email = "Format: IT12345678@my.sliit.lk";
+    if (!form.email || form.email.trim() === "") {
+      newErrors.email = "Required";
     }
 
     if (!form.title.trim()) newErrors.title = "Required";
@@ -105,7 +104,7 @@ function CreateTicketForm() {
   const resetForm = () => {
     setForm({
       itNumber: "",
-      email: "",
+      email: user?.email || localStorage.getItem("email") || "",
       title: "",
       description: "",
       category: "Electrical",
@@ -130,7 +129,7 @@ function CreateTicketForm() {
         priority: form.priority,
         building: form.building,
         room: form.room,
-        createdByEmail: form.email,
+        createdByEmail: user?.email || localStorage.getItem("email") || form.email,
         createdById: form.itNumber,
         createdByRole: "STUDENT",
       };
@@ -151,6 +150,7 @@ function CreateTicketForm() {
           {
             headers: {
               "Content-Type": "multipart/form-data",
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
             },
           }
         );
@@ -233,13 +233,12 @@ function CreateTicketForm() {
         </div>
 
         <div>
-          <label className="text-gray-300">Email *</label>
+          <label className="text-gray-300">Email (Auto-filled) *</label>
           <input
             name="email"
             value={form.email}
-            onChange={handleChange}
-            placeholder="IT12345678@my.sliit.lk"
-            className="w-full p-3 mt-1 bg-transparent border border-white/10 rounded-lg"
+            readOnly
+            className="w-full p-3 mt-1 bg-white/5 border border-white/10 rounded-lg text-gray-400 cursor-not-allowed"
           />
           {errors.email && (
             <p className="text-red-400 text-sm mt-1">{errors.email}</p>
@@ -393,7 +392,8 @@ function MyTickets() {
   const [attachments, setAttachments] = useState([]);
   const [attachmentLoading, setAttachmentLoading] = useState(false);
 
-  const email = localStorage.getItem("email");
+  const { user } = useContext(AuthContext);
+  const email = user?.email || localStorage.getItem("email");
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -482,18 +482,18 @@ function MyTickets() {
   };
 
   const handleDeleteAttachment = async (attachmentId) => {
-  try {
-    const res = await axios.delete(`${API}/api/ticket-attachments/${attachmentId}`);
-    console.log("Delete response:", res.data);
+    try {
+      const res = await axios.delete(`${API}/api/ticket-attachments/${attachmentId}`);
+      console.log("Delete response:", res.data);
 
-    await fetchAttachments(selectedTicket.id);
-    alert("Attachment deleted successfully");
-  } catch (err) {
-    console.error("Error deleting attachment:", err);
-    console.error("Backend response:", err.response?.data);
-    alert(`Failed to delete attachment: ${err.response?.data || "Unknown error"}`);
-  }
-};
+      await fetchAttachments(selectedTicket.id);
+      alert("Attachment deleted successfully");
+    } catch (err) {
+      console.error("Error deleting attachment:", err);
+      console.error("Backend response:", err.response?.data);
+      alert(`Failed to delete attachment: ${err.response?.data || "Unknown error"}`);
+    }
+  };
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -558,11 +558,10 @@ function MyTickets() {
             <div
               key={ticket.id}
               onClick={() => handleSelectTicket(ticket)}
-              className={`p-4 rounded-xl border cursor-pointer transition flex justify-between items-center ${
-                selectedTicket?.id === ticket.id
+              className={`p-4 rounded-xl border cursor-pointer transition flex justify-between items-center ${selectedTicket?.id === ticket.id
                   ? "border-[#0A6ED3] bg-[#0B1220]"
                   : "border-white/10 bg-[#000919] hover:bg-[#0B1220]"
-              }`}
+                }`}
             >
               <div>
                 <h4 className="font-semibold text-white">{ticket.title}</h4>

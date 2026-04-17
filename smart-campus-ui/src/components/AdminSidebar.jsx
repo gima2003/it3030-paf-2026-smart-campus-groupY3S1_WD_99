@@ -107,6 +107,37 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
               title={!isSidebarOpen ? item.label : ""}
             >
               <Icon size={20} className="shrink-0" />
+        <Link className={linkClass("/admin")} to="/admin">
+          Dashboard
+        </Link>
+
+        <Link className={linkClass("/admin/users")} to="/admin/users">
+          User Management
+        </Link>
+
+        <Link className={linkClass("/admin/resources")} to="/admin/resources">
+          Facilities & Assets
+        </Link>
+
+        <Link className={linkClass("/admin/bookings")} to="/admin/bookings">
+          Booking Management
+        </Link>
+
+        <Link className={linkClass("/admin/tickets")} to="/admin/tickets">
+          Tickets Management
+        </Link>
+
+        <Link className={linkClass("/admin/technicians")} to="/admin/technicians">
+          Technicians Management
+        </Link>
+
+        <Link className={linkClass("/admin/notifications")} to="/admin/notifications">
+          Notifications
+        </Link>
+
+        <Link className={linkClass("/admin/analytics")} to="/admin/analytics">
+          Analytics
+        </Link>
 
               <span
                 className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
