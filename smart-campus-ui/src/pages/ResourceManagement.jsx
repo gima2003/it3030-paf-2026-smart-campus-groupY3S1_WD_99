@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import ResourceForm from "../components/ResourceForm";
+import ResourceDetailsModal from "../components/ResourceDetailsModal";
 
 const FACILITY_API_URL = "http://localhost:8081/api/facilities";
 const EQUIPMENT_API_URL = "http://localhost:8081/api/equipment";
+
+const getFacilityImagesUrl = (facilityId) =>
+  `http://localhost:8081/api/facilities/${facilityId}/images`;
+
+const getEquipmentImagesUrl = (equipmentId) =>
+  `http://localhost:8081/api/equipment/${equipmentId}/images`;
 
 const STATUS_OPTIONS = [
   { value: "ALL", label: "All Statuses" },
@@ -31,6 +38,12 @@ const TYPE_OPTIONS = [
   { value: "WHITEBOARD", label: "Whiteboard" },
   { value: "COMPUTER", label: "Computer" },
   { value: "SPORTS_KIT", label: "Sports Kit" },
+];
+
+const RESOURCE_VIEW_OPTIONS = [
+  { value: "ALL", label: "All Resources" },
+  { value: "FACILITY", label: "Facilities Only" },
+  { value: "EQUIPMENT", label: "Equipment Only" },
 ];
 
 const STATUS_CLASSES = {
@@ -116,6 +129,63 @@ const buildEquipmentPayload = (formData) => ({
   facilityIds: [],
 });
 
+const fetchImagesForResource = async (resourceCategory, resourceId) => {
+  const url =
+    resourceCategory === "FACILITY"
+      ? getFacilityImagesUrl(resourceId)
+      : getEquipmentImagesUrl(resourceId);
+
+  const response = await axios.get(url);
+  return response.data || [];
+};
+
+const uploadImagesForResource = async (
+  resourceCategory,
+  resourceId,
+  imageFiles = []
+) => {
+  if (!imageFiles || imageFiles.length === 0) return;
+
+  const url =
+    resourceCategory === "FACILITY"
+      ? getFacilityImagesUrl(resourceId)
+      : getEquipmentImagesUrl(resourceId);
+
+  for (let index = 0; index < imageFiles.length; index += 1) {
+    const file = imageFiles[index];
+    const multipartData = new FormData();
+    multipartData.append("file", file);
+    multipartData.append("isPrimary", index === 0 ? "true" : "false");
+
+    await axios.post(url, multipartData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  }
+};
+
+const deleteRemovedImagesForResource = async (
+  resourceCategory,
+  resourceId,
+  originalImages = [],
+  keptImages = []
+) => {
+  const keptIds = new Set((keptImages || []).map((img) => img.id));
+  const removedImages = (originalImages || []).filter(
+    (img) => !keptIds.has(img.id)
+  );
+
+  for (const image of removedImages) {
+    const deleteUrl =
+      resourceCategory === "FACILITY"
+        ? `${getFacilityImagesUrl(resourceId)}/${image.id}`
+        : `${getEquipmentImagesUrl(resourceId)}/${image.id}`;
+
+    await axios.delete(deleteUrl);
+  }
+};
+
 function StatCard({ label, value, colorClass = "text-white" }) {
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-3">
@@ -141,7 +211,7 @@ function FilterSelect({ value, onChange, options }) {
   );
 }
 
-function ResourceRow({ resource, onEdit, onDelete }) {
+function ResourceRow({ resource, onView, onEdit, onDelete }) {
   return (
     <tr className="border-b border-white/10 hover:bg-white/5 transition text-sm">
       <td className="px-4 py-2.5 font-medium">{resource.resourceCode}</td>
@@ -182,6 +252,12 @@ function ResourceRow({ resource, onEdit, onDelete }) {
       <td className="px-4 py-2.5">
         <div className="flex items-center justify-center gap-1.5">
           <button
+            onClick={() => onView(resource)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-medium transition"
+          >
+            View
+          </button>
+          <button
             onClick={() => onEdit(resource)}
             className="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded-md text-xs font-medium transition"
           >
@@ -204,6 +280,7 @@ function ResourceTableSection({
   resources,
   loading,
   emptyMessage,
+  onView,
   onEdit,
   onDelete,
 }) {
@@ -254,6 +331,7 @@ function ResourceTableSection({
                 <ResourceRow
                   key={`${resource.resourceCategory}-${resource.id}`}
                   resource={resource}
+                  onView={onView}
                   onEdit={onEdit}
                   onDelete={onDelete}
                 />
@@ -271,9 +349,12 @@ function ResourceManagement() {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const [resourceViewFilter, setResourceViewFilter] = useState("ALL");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingResource, setEditingResource] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedResource, setSelectedResource] = useState(null);
 
   const fetchResources = async () => {
     try {
@@ -309,14 +390,38 @@ function ResourceManagement() {
     setIsFormOpen(true);
   };
 
-  const handleOpenEditForm = (resource) => {
-    setEditingResource(resource);
-    setIsFormOpen(true);
+  const handleOpenEditForm = async (resource) => {
+    try {
+      const images = await fetchImagesForResource(
+        resource.resourceCategory,
+        resource.id
+      );
+
+      setEditingResource({
+        ...resource,
+        images,
+      });
+
+      setIsFormOpen(true);
+    } catch (error) {
+      console.error("Error loading resource images:", error);
+      alert("Failed to load resource images");
+    }
   };
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingResource(null);
+  };
+
+  const handleOpenDetails = (resource) => {
+  setSelectedResource(resource);
+  setIsDetailsOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedResource(null);
+    setIsDetailsOpen(false);
   };
 
   const handleSubmitForm = async (formData) => {
@@ -327,16 +432,43 @@ function ResourceManagement() {
         : buildEquipmentPayload(formData);
 
       if (editingResource) {
+        const resourceCategory = editingResource.resourceCategory;
+        const resourceId = editingResource.id;
+
         const updateUrl =
-          editingResource.resourceCategory === "FACILITY"
-            ? `${FACILITY_API_URL}/${editingResource.id}`
-            : `${EQUIPMENT_API_URL}/${editingResource.id}`;
+          resourceCategory === "FACILITY"
+            ? `${FACILITY_API_URL}/${resourceId}`
+            : `${EQUIPMENT_API_URL}/${resourceId}`;
 
         await axios.put(updateUrl, payload);
+
+        await deleteRemovedImagesForResource(
+          resourceCategory,
+          resourceId,
+          editingResource.images || [],
+          formData.existingImages || []
+        );
+
+        await uploadImagesForResource(
+          resourceCategory,
+          resourceId,
+          formData.selectedImages || []
+        );
+
         alert("Resource updated successfully");
       } else {
         const createUrl = isFacility ? FACILITY_API_URL : EQUIPMENT_API_URL;
-        await axios.post(createUrl, payload);
+        const createResponse = await axios.post(createUrl, payload);
+
+        const createdResource = createResponse.data;
+        const createdId = createdResource.id;
+
+        await uploadImagesForResource(
+          formData.resourceCategory,
+          createdId,
+          formData.selectedImages || []
+        );
+
         alert("Resource created successfully");
       }
 
@@ -346,7 +478,7 @@ function ResourceManagement() {
       console.error("Error saving resource:", error);
       alert(
         error?.response?.data?.message ||
-          "Failed to save resource. Check backend validation and enum values."
+          "Failed to save resource or images. Check backend validation and upload flow."
       );
     }
   };
@@ -399,6 +531,12 @@ function ResourceManagement() {
     );
   }, [filteredResources]);
 
+  const showFacilitiesTable =
+  resourceViewFilter === "ALL" || resourceViewFilter === "FACILITY";
+
+  const showEquipmentTable =
+  resourceViewFilter === "ALL" || resourceViewFilter === "EQUIPMENT";
+
   const stats = useMemo(
     () => ({
       total: resources.length,
@@ -450,7 +588,7 @@ function ResourceManagement() {
       </div>
 
       <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
           <input
             type="text"
             placeholder="Search by code, name, or location"
@@ -458,11 +596,19 @@ function ResourceManagement() {
             onChange={(e) => setSearchText(e.target.value)}
             className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
           />
+
+          <FilterSelect
+            value={resourceViewFilter}
+            onChange={setResourceViewFilter}
+            options={RESOURCE_VIEW_OPTIONS}
+          />
+
           <FilterSelect
             value={statusFilter}
             onChange={setStatusFilter}
             options={STATUS_OPTIONS}
           />
+
           <FilterSelect
             value={typeFilter}
             onChange={setTypeFilter}
@@ -471,29 +617,41 @@ function ResourceManagement() {
         </div>
       </div>
 
-      <ResourceTableSection
-        title="Facilities"
-        resources={facilityResources}
-        loading={loading}
-        emptyMessage="No facilities found"
-        onEdit={handleOpenEditForm}
-        onDelete={handleDelete}
-      />
+      {showFacilitiesTable && (
+        <ResourceTableSection
+          title="Facilities"
+          resources={facilityResources}
+          loading={loading}
+          emptyMessage="No facilities found"
+          onView={handleOpenDetails}
+          onEdit={handleOpenEditForm}
+          onDelete={handleDelete}
+        />
+      )}
 
-      <ResourceTableSection
-        title="Equipment"
-        resources={equipmentResources}
-        loading={loading}
-        emptyMessage="No equipment found"
-        onEdit={handleOpenEditForm}
-        onDelete={handleDelete}
-      />
+      {showEquipmentTable && (
+        <ResourceTableSection
+          title="Equipment"
+          resources={equipmentResources}
+          loading={loading}
+          emptyMessage="No equipment found"
+          onView={handleOpenDetails}
+          onEdit={handleOpenEditForm}
+          onDelete={handleDelete}
+        />
+      )}
 
       <ResourceForm
         isOpen={isFormOpen}
         onClose={handleCloseForm}
         onSubmit={handleSubmitForm}
         initialData={editingResource}
+      />
+
+      <ResourceDetailsModal
+        isOpen={isDetailsOpen}
+        onClose={handleCloseDetails}
+        resource={selectedResource}
       />
     </div>
   );
