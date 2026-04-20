@@ -34,19 +34,12 @@ function Navbar() {
         {/* Login */}
         <button
           onClick={() => navigate("/login")}
-          className="text-gray-300 hover:text-white font-medium transition"
+           className="bg-[#0A6ED3] text-white px-5 py-2 rounded-lg hover:bg-[#054E98] transition shadow-md"
         >
           Login
         </button>
 
-        {/* Sign Up */}
-        <button
-          onClick={() => navigate("/signup")}
-          className="bg-[#0A6ED3] text-white px-5 py-2 rounded-lg hover:bg-[#054E98] transition shadow-md"
-        >
-          Sign Up
-        </button>
-
+    
         {/* Profile */}
         <FaUserCircle className="text-2xl text-gray-400 cursor-pointer hover:text-white transition" />
       </div>

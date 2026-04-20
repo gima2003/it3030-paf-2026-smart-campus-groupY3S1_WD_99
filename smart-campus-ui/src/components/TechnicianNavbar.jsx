@@ -1,10 +1,10 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { FaBell, FaUserCircle } from "react-icons/fa";
+import { FaBell, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import ProfileModal from "./ProfileModal";
 
 function TechnicianNavbar() {
-  const { user, setUser, logout, fetchUser } = useContext(AuthContext);
+  const { user, setUser, logout } = useContext(AuthContext);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -14,50 +14,73 @@ function TechnicianNavbar() {
 
   return (
     <>
-      <div className="h-16 bg-[#000919] border-b border-white/10 px-6 flex justify-between items-center relative z-40">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#000919]/95 backdrop-blur-md">
+        <div className="h-20 px-6 lg:px-8 flex items-center justify-between">
 
-        {/* Title */}
-        <h3 className="text-lg font-semibold text-white">
-          Technician Dashboard
-        </h3>
+          {/* Left Side */}
+          <div className="flex flex-col">
+            <h2 className="text-white text-xl font-semibold tracking-tight">
+              Technician Dashboard
+            </h2>
+            <span className="text-sm text-gray-400">
+              Manage assigned tickets and maintenance tasks
+            </span>
+          </div>
 
-        {/* Right Side */}
-        <div className="flex items-center gap-6">
+          {/* Right Side */}
+          <div className="flex items-center gap-3 lg:gap-4">
 
-          {/* User Info */}
-          {user && (
-            <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-medium text-white">{user.firstName} {user.lastName}</span>
-              <span className="text-xs text-gray-400">ID: {user.employeeId}</span>
-            </div>
-          )}
+            {/* Notification */}
+            <button
+              className="relative w-11 h-11 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 transition flex items-center justify-center"
+              title="Notifications"
+            >
+              <FaBell className="text-lg" />
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0A6ED3] text-[10px] font-bold text-white flex items-center justify-center">
+                2
+              </span>
+            </button>
 
-          {/* Notification */}
-          <FaBell className="text-gray-400 text-xl cursor-pointer hover:text-white transition" />
+            {/* Profile */}
+            {user && (
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10 transition"
+              >
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0A6ED3] to-[#054E98] flex items-center justify-center text-white shadow-md">
+                  <FaUserCircle className="text-xl" />
+                </div>
 
-          {/* Profile */}
-          <FaUserCircle 
-            onClick={() => setIsProfileOpen(true)}
-            className="text-gray-400 text-2xl cursor-pointer hover:text-white transition transform hover:scale-110" 
-          />
+                <div className="hidden md:flex flex-col items-start leading-tight">
+                  <span className="text-sm font-semibold text-white">
+                    {user.firstName} {user.lastName}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    ID: {user.employeeId}
+                  </span>
+                </div>
+              </button>
+            )}
 
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="bg-[#0A6ED3] text-white px-4 py-2 rounded-lg hover:bg-[#054E98] transition"
-          >
-            Logout
-          </button>
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0A6ED3] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#085cb0] transition shadow-md shadow-blue-900/20"
+            >
+              <FaSignOutAlt />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
 
+          </div>
         </div>
-      </div>
-      
+      </header>
+
       {/* Profile Modal */}
-      <ProfileModal 
-        isOpen={isProfileOpen} 
-        onClose={() => setIsProfileOpen(false)} 
-        user={user} 
-        onUpdateSuccess={(updatedUser) => setUser(updatedUser)} 
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={user}
+        onUpdateSuccess={(updatedUser) => setUser(updatedUser)}
       />
     </>
   );

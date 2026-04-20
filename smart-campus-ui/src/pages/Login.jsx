@@ -54,7 +54,7 @@ function Login() {
     <div style={styles.container}>
       <div style={styles.card}>
         <h2 style={styles.title}>Smart Campus Login</h2>
-        <p style={{ textAlign: "center", color: "#666", marginBottom: "30px", fontSize: "14px" }}>
+        <p style={{ textAlign: "center", color: "#ccc", marginBottom: "30px", fontSize: "14px" }}>
           Please sign in using your campus Google account.
         </p>
 
@@ -82,57 +82,70 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "linear-gradient(135deg, #000919, #0A6ED3)"
+    background: `
+      radial-gradient(circle at 20% 30%, rgba(10,110,211,0.4), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(10,110,211,0.3), transparent 40%),
+      linear-gradient(135deg, #000919, #020817)
+    `,
+    position: "relative",
+    overflow: "hidden"
   },
+
   card: {
-    background: "#ffffff",
+    backdropFilter: "blur(20px)",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.1)",
     padding: "40px",
-    borderRadius: "12px",
+    borderRadius: "16px",
     width: "380px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
+    boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
+    color: "white"
   },
+
   title: {
     textAlign: "center",
     marginBottom: "10px",
-    color: "#000919",
+    color: "#ffffff",
     fontWeight: "600",
     fontSize: "24px"
   },
+
   googleButton: {
     width: "100%",
     padding: "12px",
-    backgroundColor: "#fff",
-    color: "#333",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    color: "#fff",
+    border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: "10px",
     cursor: "pointer",
     fontSize: "16px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontWeight: "500",
-    transition: "all 0.2s ease"
+    transition: "all 0.3s ease"
   },
+
   errorPopup: {
-    backgroundColor: "#FEE2E2",
-    color: "#B91C1C",
+    backgroundColor: "rgba(255,0,0,0.1)",
+    color: "#ff6b6b",
     padding: "12px",
-    borderRadius: "6px",
+    borderRadius: "8px",
     marginBottom: "20px",
     fontSize: "14px",
     textAlign: "center",
-    border: "1px solid #F87171"
+    border: "1px solid rgba(255,0,0,0.3)"
   },
+
   successPopup: {
-    backgroundColor: "#D1FAE5",
-    color: "#065F46",
+    backgroundColor: "rgba(0,255,150,0.1)",
+    color: "#00ff9c",
     padding: "12px",
-    borderRadius: "6px",
+    borderRadius: "8px",
     marginBottom: "20px",
     fontSize: "14px",
     textAlign: "center",
-    border: "1px solid #34D399"
+    border: "1px solid rgba(0,255,150,0.3)"
   }
 };
-
 export default Login;

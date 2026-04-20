@@ -1,3 +1,5 @@
+import dashboardPreview from "../assets/prev1.jpeg";
+
 function HeroSection() {
   return (
     <section className="bg-[#000919] py-28 px-8 text-white">
@@ -28,12 +30,18 @@ function HeroSection() {
           </div>
         </div>
 
-        {/* Right Preview */}
-        <div className="hidden md:block">
-          <div className="bg-white/5 border border-white/10 h-80 rounded-2xl flex items-center justify-center text-gray-300 text-xl font-semibold">
-            Dashboard Preview
-          </div>
-        </div>
+      {/* Right Preview */}
+<div className="hidden md:block">
+  <div className="bg-white/5 border border-white/10 h-80 rounded-2xl overflow-hidden shadow-lg">
+    
+    <img
+      src={dashboardPreview}
+      alt="Dashboard Preview"
+      className="w-full h-full object-cover"
+    />
+
+  </div>
+</div>
 
       </div>
     </section>
