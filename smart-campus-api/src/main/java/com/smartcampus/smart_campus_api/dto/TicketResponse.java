@@ -1,55 +1,40 @@
-package com.smartcampus.smart_campus_api.entity;
+package com.smartcampus.smart_campus_api.dto;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "ticket")
-public class Ticket {
+public class TicketResponse {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String title;
     private String description;
-
     private String category;
     private String priority;
-
     private String status;
-
     private String building;
     private String room;
-
-    @Column(name = "created_by_email")
     private String createdByEmail;
-
-    @Column(name = "created_by_id")
     private String createdById;
-
-    @Column(name = "created_by_role")
     private String createdByRole;
-
-    @Column(name = "technician_email")
     private String technicianEmail;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "first_response_at")
     private LocalDateTime firstResponseAt;
-
-    @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
-
-    @Column(name = "due_at")
     private LocalDateTime dueAt;
 
-    // GETTERS & SETTERS
+    private String slaStatus;
+    private String responseTime;
+    private String resolutionTime;
+
+    public TicketResponse() {
+    }
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -170,5 +155,29 @@ public class Ticket {
 
     public void setDueAt(LocalDateTime dueAt) {
         this.dueAt = dueAt;
+    }
+
+    public String getSlaStatus() {
+        return slaStatus;
+    }
+
+    public void setSlaStatus(String slaStatus) {
+        this.slaStatus = slaStatus;
+    }
+
+    public String getResponseTime() {
+        return responseTime;
+    }
+
+    public void setResponseTime(String responseTime) {
+        this.responseTime = responseTime;
+    }
+
+    public String getResolutionTime() {
+        return resolutionTime;
+    }
+
+    public void setResolutionTime(String resolutionTime) {
+        this.resolutionTime = resolutionTime;
     }
 }

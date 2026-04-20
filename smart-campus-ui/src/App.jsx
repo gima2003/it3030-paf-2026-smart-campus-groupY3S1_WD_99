@@ -32,6 +32,10 @@ import StudentResources from "./pages/StudentResources";
 import StudentReport from "./pages/StudentReport";
 import StudentNotifications from "./pages/StudentNotifications";
 
+import LecturerDashboard from "./pages/LecturerDashboard"
+import LecturerLayout from "./pages/LecturerLayout";
+
+
 /* 🔥 LANDING PAGE */
 function LandingPage() {
   return (
@@ -75,6 +79,19 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="tickets" element={<AdminTickets />} />
             <Route path="technicians" element={<AdminTechnicians />} />
+          </Route>
+
+           {/* LECTURER */}
+          <Route
+            path="/lecturer"
+            element={
+              <ProtectedRoute allowedRole="LECTURER">
+                <LecturerLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<LecturerDashboard />} />
+           
           </Route>
 
           {/* STUDENT */}
@@ -135,6 +152,8 @@ function App() {
             <Route path="tickets" element={<TechnicianTickets />} />
             <Route path="history" element={<TechnicianHistory />} />
             <Route path="notifications" element={<TechnicianNotifications />} />
+
+            
           </Route>
         </Routes>
       </AuthProvider>

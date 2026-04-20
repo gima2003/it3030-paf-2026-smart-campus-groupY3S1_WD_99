@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { FaComments, FaPaperPlane, FaImage } from "react-icons/fa";
+import {
+  FaComments,
+  FaPaperPlane,
+  FaImage,
+  FaClock,
+} from "react-icons/fa";
 
 function AdminTickets() {
   const API = "http://localhost:8081";
@@ -19,10 +24,10 @@ function AdminTickets() {
 
   const [attachments, setAttachments] = useState([]);
   const [attachmentLoading, setAttachmentLoading] = useState(false);
+  const [imageErrors, setImageErrors] = useState({});
 
   const adminEmail = localStorage.getItem("email") || "admin@sliit.lk";
 
-  // FETCH ALL TICKETS
   const fetchTickets = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/api/tickets`);
@@ -30,9 +35,8 @@ function AdminTickets() {
     } catch (err) {
       console.error("Error fetching tickets:", err);
     }
-  }, []);
+  }, [API]);
 
-  // FETCH ALL TECHNICIANS
   const fetchTechnicians = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/api/technicians`);
@@ -40,32 +44,38 @@ function AdminTickets() {
     } catch (err) {
       console.error("Error fetching technicians:", err);
     }
-  }, []);
+  }, [API]);
 
-  // FETCH COMMENTS FOR SELECTED TICKET
-  const fetchComments = useCallback(async (ticketId) => {
-    try {
-      const res = await axios.get(`${API}/api/ticket-comments/ticket/${ticketId}`);
-      setComments(res.data);
-    } catch (err) {
-      console.error("Error fetching comments:", err);
-      setComments([]);
-    }
-  }, []);
+  const fetchComments = useCallback(
+    async (ticketId) => {
+      try {
+        const res = await axios.get(`${API}/api/ticket-comments/ticket/${ticketId}`);
+        setComments(res.data);
+      } catch (err) {
+        console.error("Error fetching comments:", err);
+        setComments([]);
+      }
+    },
+    [API]
+  );
 
-  // FETCH ATTACHMENTS FOR SELECTED TICKET
-  const fetchAttachments = useCallback(async (ticketId) => {
-    try {
-      setAttachmentLoading(true);
-      const res = await axios.get(`${API}/api/ticket-attachments/ticket/${ticketId}`);
-      setAttachments(res.data);
-    } catch (err) {
-      console.error("Error fetching attachments:", err);
-      setAttachments([]);
-    } finally {
-      setAttachmentLoading(false);
-    }
-  }, []);
+  const fetchAttachments = useCallback(
+    async (ticketId) => {
+      try {
+        setAttachmentLoading(true);
+        const res = await axios.get(`${API}/api/ticket-attachments/ticket/${ticketId}`);
+        setAttachments(res.data);
+        setImageErrors({});
+      } catch (err) {
+        console.error("Error fetching attachments:", err);
+        setAttachments([]);
+        setImageErrors({});
+      } finally {
+        setAttachmentLoading(false);
+      }
+    },
+    [API]
+  );
 
   useEffect(() => {
     const loadData = async () => {
@@ -83,10 +93,10 @@ function AdminTickets() {
     } else {
       setComments([]);
       setAttachments([]);
+      setImageErrors({});
     }
   }, [selectedTicket, fetchComments, fetchAttachments]);
 
-  // WHEN SELECTING A TICKET, PRELOAD CURRENT VALUES
   const handleSelectTicket = (ticket) => {
     setSelectedTicket(ticket);
     setTechnician(ticket.technicianEmail || "");
@@ -94,7 +104,6 @@ function AdminTickets() {
     setCommentText("");
   };
 
-  // UPDATE TICKET
   const updateTicket = async () => {
     if (!selectedTicket) return;
 
@@ -119,13 +128,16 @@ function AdminTickets() {
         );
       }
 
-      await fetchTickets();
+      const res = await axios.get(`${API}/api/tickets`);
+      setTickets(res.data);
 
-      setSelectedTicket((prev) => ({
-        ...prev,
-        technicianEmail: technician,
-        status: newStatus,
-      }));
+      const updated = res.data.find((t) => t.id === selectedTicket.id);
+
+      if (updated) {
+        setSelectedTicket(updated);
+        setTechnician(updated.technicianEmail || "");
+        setNewStatus(updated.status || "OPEN");
+      }
 
       alert("Ticket updated successfully!");
     } catch (err) {
@@ -134,7 +146,6 @@ function AdminTickets() {
     }
   };
 
-  // ADD COMMENT
   const handleAddComment = async () => {
     if (!selectedTicket || !commentText.trim()) return;
 
@@ -159,13 +170,19 @@ function AdminTickets() {
     }
   };
 
-  // FILTER
+  const handleImageError = (attachmentId, info) => {
+    console.log("Admin image failed:", info);
+    setImageErrors((prev) => ({
+      ...prev,
+      [attachmentId]: true,
+    }));
+  };
+
   const filteredTickets =
     filterStatus === "ALL"
       ? tickets
       : tickets.filter((t) => t.status === filterStatus);
 
-  // PRIORITY COLOR
   const getPriorityStyle = (priority) => {
     switch (priority?.toLowerCase()) {
       case "high":
@@ -179,7 +196,6 @@ function AdminTickets() {
     }
   };
 
-  // STATUS BADGE
   const getStatusStyle = (status) => {
     switch (status) {
       case "OPEN":
@@ -197,27 +213,39 @@ function AdminTickets() {
     }
   };
 
-  const formatStatus = (status) => status?.replace("_", " ");
+  const getSlaBadgeStyle = (slaStatus) => {
+    switch (slaStatus) {
+      case "ON_TIME":
+        return "bg-cyan-500 text-white";
+      case "DUE_SOON":
+        return "bg-orange-400 text-black";
+      case "OVERDUE":
+        return "bg-red-600 text-white";
+      case "COMPLETED":
+        return "bg-green-600 text-white";
+      default:
+        return "bg-white/10 text-white";
+    }
+  };
+
+  const formatStatus = (status) => status?.replaceAll("_", " ");
+  const formatSlaStatus = (status) => status?.replaceAll("_", " ");
 
   const formatDateTime = (dateString) => {
-    if (!dateString) return "";
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleString();
   };
 
   return (
     <div className="bg-[#000919] min-h-screen p-8 text-white">
-      {/* HEADER */}
       <div className="flex justify-between mb-6">
         <h2 className="text-3xl font-semibold">
           Maintenance & Ticket Management
         </h2>
-        <div className="text-gray-400">
-          Total Tickets: {tickets.length}
-        </div>
+        <div className="text-gray-400">Total Tickets: {tickets.length}</div>
       </div>
 
-      {/* FILTER */}
       <select
         value={filterStatus}
         onChange={(e) => setFilterStatus(e.target.value)}
@@ -232,7 +260,6 @@ function AdminTickets() {
       </select>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* LEFT PANEL */}
         <div className="space-y-4">
           {filteredTickets.length === 0 && (
             <p className="text-gray-400">No tickets found</p>
@@ -254,7 +281,7 @@ function AdminTickets() {
                 {ticket.building} - {ticket.room}
               </p>
 
-              <div className="flex justify-between mt-3 items-center">
+              <div className="flex flex-wrap gap-2 mt-3 items-center">
                 <span
                   className={`px-3 py-1 rounded-full text-xs ${getStatusStyle(
                     ticket.status
@@ -262,6 +289,20 @@ function AdminTickets() {
                 >
                   {formatStatus(ticket.status)}
                 </span>
+
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${getSlaBadgeStyle(
+                    ticket.slaStatus
+                  )}`}
+                >
+                  {formatSlaStatus(ticket.slaStatus) || "UNKNOWN"}
+                </span>
+              </div>
+
+              <div className="flex justify-between mt-3 items-center">
+                <p className="text-xs text-gray-400">
+                  Due: {formatDateTime(ticket.dueAt)}
+                </p>
 
                 <span className={getPriorityStyle(ticket.priority)}>
                   {ticket.priority}
@@ -271,12 +312,9 @@ function AdminTickets() {
           ))}
         </div>
 
-        {/* RIGHT PANEL */}
         <div className="bg-white/5 p-6 rounded-xl border border-white/10">
           {!selectedTicket ? (
-            <p className="text-gray-400 text-center mt-20">
-              Select a ticket
-            </p>
+            <p className="text-gray-400 text-center mt-20">Select a ticket</p>
           ) : (
             <>
               <h3 className="text-xl font-semibold mb-4 text-[#0A6ED3]">
@@ -285,20 +323,24 @@ function AdminTickets() {
 
               <div className="space-y-2 mb-6">
                 <p className="text-gray-200">
-                  <strong className="text-white">Title:</strong> {selectedTicket.title}
+                  <strong className="text-white">Title:</strong>{" "}
+                  {selectedTicket.title}
                 </p>
                 <p className="text-gray-200">
-                  <strong className="text-white">Description:</strong> {selectedTicket.description}
+                  <strong className="text-white">Description:</strong>{" "}
+                  {selectedTicket.description}
                 </p>
                 <p className="text-gray-200">
-                  <strong className="text-white">Category:</strong> {selectedTicket.category}
+                  <strong className="text-white">Category:</strong>{" "}
+                  {selectedTicket.category}
                 </p>
                 <p className="text-gray-200">
-                  <strong className="text-white">Priority:</strong> {selectedTicket.priority}
+                  <strong className="text-white">Priority:</strong>{" "}
+                  {selectedTicket.priority}
                 </p>
                 <p className="text-gray-200">
-                  <strong className="text-white">Location:</strong> {selectedTicket.building} -{" "}
-                  {selectedTicket.room}
+                  <strong className="text-white">Location:</strong>{" "}
+                  {selectedTicket.building} - {selectedTicket.room}
                 </p>
                 <p className="text-gray-200">
                   <strong className="text-white">Current Status:</strong>{" "}
@@ -310,44 +352,114 @@ function AdminTickets() {
                 </p>
               </div>
 
-              {/* ATTACHMENTS */}
+              <div className="border-t border-white/10 pt-5 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <FaClock className="text-[#0A6ED3]" />
+                  <h4 className="text-lg font-semibold text-white">
+                    SLA Information
+                  </h4>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-gray-200">
+                    <strong className="text-white">SLA Status:</strong>{" "}
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ml-2 ${getSlaBadgeStyle(
+                        selectedTicket.slaStatus
+                      )}`}
+                    >
+                      {formatSlaStatus(selectedTicket.slaStatus) || "UNKNOWN"}
+                    </span>
+                  </p>
+
+                  <p className="text-gray-200">
+                    <strong className="text-white">Created At:</strong>{" "}
+                    {formatDateTime(selectedTicket.createdAt)}
+                  </p>
+
+                  <p className="text-gray-200">
+                    <strong className="text-white">Due At:</strong>{" "}
+                    {formatDateTime(selectedTicket.dueAt)}
+                  </p>
+
+                  <p className="text-gray-200">
+                    <strong className="text-white">First Response At:</strong>{" "}
+                    {formatDateTime(selectedTicket.firstResponseAt)}
+                  </p>
+
+                  <p className="text-gray-200">
+                    <strong className="text-white">Resolved At:</strong>{" "}
+                    {formatDateTime(selectedTicket.resolvedAt)}
+                  </p>
+
+                  <p className="text-gray-200">
+                    <strong className="text-white">Response Time:</strong>{" "}
+                    {selectedTicket.responseTime || "N/A"}
+                  </p>
+
+                  <p className="text-gray-200">
+                    <strong className="text-white">Resolution Time:</strong>{" "}
+                    {selectedTicket.resolutionTime || "N/A"}
+                  </p>
+                </div>
+              </div>
+
               <div className="border-t border-white/10 pt-5 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <FaImage className="text-[#0A6ED3]" />
-                  <h4 className="text-lg font-semibold text-white">Attachments</h4>
+                  <h4 className="text-lg font-semibold text-white">
+                    Attachments
+                  </h4>
                 </div>
 
                 {attachmentLoading ? (
-                  <p className="text-gray-400 text-sm">Loading attachments...</p>
+                  <p className="text-gray-400 text-sm">
+                    Loading attachments...
+                  </p>
                 ) : attachments.length === 0 ? (
                   <p className="text-gray-400 text-sm">No attachments</p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {attachments.map((att) => (
-                      <div
-                        key={att.id}
-                        className="bg-[#000919] border border-white/10 rounded-xl p-3"
-                      >
-                        <img
-                          src={`${API}/api/ticket-attachments/view?path=${encodeURIComponent(
-                            att.filePath
-                          )}`}
-                          alt={att.fileName}
-                          className="w-full h-40 object-cover rounded-lg mb-3"
-                        />
+                    {attachments.map((att) => {
+                      const imageUrl = `${API}/api/ticket-attachments/view/${att.id}`;
 
-                        <p className="text-sm text-gray-300 truncate">
-                          {att.fileName}
-                        </p>
-                      </div>
-                    ))}
+                      return (
+                        <div
+                          key={att.id}
+                          className="bg-[#000919] border border-white/10 rounded-xl p-3"
+                        >
+                          {!imageErrors[att.id] ? (
+                            <img
+                              src={imageUrl}
+                              alt={att.fileName}
+                              className="w-full h-40 object-cover rounded-lg mb-3"
+                              onError={() => handleImageError(att.id, att)}
+                            />
+                          ) : (
+                            <div className="w-full h-40 rounded-lg mb-3 bg-white/5 border border-white/10 flex items-center justify-center text-center p-4">
+                              <div>
+                                <FaImage className="mx-auto text-2xl text-gray-500 mb-2" />
+                                <p className="text-sm text-gray-400">
+                                  Failed to load image
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          <p className="text-sm text-gray-300 truncate">
+                            {att.fileName}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
-              {/* ASSIGN TECHNICIAN */}
               <div className="mt-4">
-                <label className="block mb-2 text-white">Assign Technician</label>
+                <label className="block mb-2 text-white">
+                  Assign Technician
+                </label>
                 <select
                   value={technician}
                   onChange={(e) => setTechnician(e.target.value)}
@@ -364,7 +476,6 @@ function AdminTickets() {
                 </select>
               </div>
 
-              {/* UPDATE STATUS */}
               <div className="mt-4">
                 <label className="block mb-2 text-white">Update Status</label>
                 <select
@@ -387,7 +498,6 @@ function AdminTickets() {
                 Update Ticket
               </button>
 
-              {/* COMMENTS */}
               <div className="border-t border-white/10 pt-5 mt-6">
                 <div className="flex items-center gap-2 mb-4">
                   <FaComments className="text-[#0A6ED3]" />

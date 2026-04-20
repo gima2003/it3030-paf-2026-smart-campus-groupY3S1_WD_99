@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback, useContext } from "react";
+import { useState, useEffect, useCallback, useContext, useMemo } from "react";
 import {
   FaUpload,
   FaPaperPlane,
   FaComments,
   FaTrash,
   FaImage,
+  FaEdit,
+  FaTimes,
+  FaSave,
 } from "react-icons/fa";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
@@ -19,20 +22,22 @@ function StudentTickets() {
       <div className="flex gap-4 mb-8">
         <button
           onClick={() => setActiveTab("create")}
-          className={`px-5 py-2 rounded-lg transition ${activeTab === "create"
+          className={`px-5 py-2 rounded-lg transition ${
+            activeTab === "create"
               ? "bg-[#0A6ED3]"
               : "bg-white/10 hover:bg-white/20"
-            }`}
+          }`}
         >
           Create Ticket
         </button>
 
         <button
           onClick={() => setActiveTab("list")}
-          className={`px-5 py-2 rounded-lg transition ${activeTab === "list"
+          className={`px-5 py-2 rounded-lg transition ${
+            activeTab === "list"
               ? "bg-[#0A6ED3]"
               : "bg-white/10 hover:bg-white/20"
-            }`}
+          }`}
         >
           My Tickets
         </button>
@@ -129,7 +134,8 @@ function CreateTicketForm() {
         priority: form.priority,
         building: form.building,
         room: form.room,
-        createdByEmail: user?.email || localStorage.getItem("email") || form.email,
+        createdByEmail:
+          user?.email || localStorage.getItem("email") || form.email,
         createdById: form.itNumber,
         createdByRole: "STUDENT",
       };
@@ -144,23 +150,37 @@ function CreateTicketForm() {
           uploadData.append("files", file);
         });
 
-        await axios.post(
-          `${API}/api/ticket-attachments/upload/${savedTicket.id}`,
-          uploadData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              "Authorization": `Bearer ${localStorage.getItem("token")}`
-            },
-          }
-        );
+        try {
+          await axios.post(
+            `${API}/api/ticket-attachments/upload/${savedTicket.id}`,
+            uploadData,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+
+          alert("✅ Ticket submitted successfully with attachments!");
+        } catch (uploadErr) {
+          console.error("Attachment upload failed:", uploadErr);
+          console.error("Upload response data:", uploadErr.response?.data);
+          console.error("Upload status:", uploadErr.response?.status);
+
+          alert(
+            `⚠️ Ticket was created, but image upload failed. ${
+              uploadErr.response?.data || ""
+            }`
+          );
+        }
+      } else {
+        alert("✅ Ticket submitted successfully!");
       }
 
-      alert("✅ Ticket Submitted Successfully!");
       resetForm();
     } catch (err) {
       console.error("Error submitting ticket:", err);
-      alert("❌ Failed to submit ticket");
+      alert("❌ Failed to create ticket");
     } finally {
       setLoading(false);
     }
@@ -168,20 +188,30 @@ function CreateTicketForm() {
 
   const handleDrop = (e) => {
     e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files).slice(0, 3);
 
-    const onlyImages = droppedFiles.filter(
+    const droppedFiles = Array.from(e.dataTransfer.files);
+
+    if (droppedFiles.length > 3) {
+      setErrors((prev) => ({
+        ...prev,
+        files: "Maximum 3 images allowed",
+      }));
+    }
+
+    const limitedFiles = droppedFiles.slice(0, 3);
+
+    const onlyImages = limitedFiles.filter(
       (file) => file.type && file.type.startsWith("image/")
     );
 
     setForm((prev) => ({ ...prev, files: onlyImages }));
 
-    if (droppedFiles.length !== onlyImages.length) {
+    if (limitedFiles.length !== onlyImages.length) {
       setErrors((prev) => ({
         ...prev,
         files: "Only image files are allowed",
       }));
-    } else {
+    } else if (droppedFiles.length <= 3) {
       setErrors((prev) => ({
         ...prev,
         files: "",
@@ -190,25 +220,48 @@ function CreateTicketForm() {
   };
 
   const handleFileSelect = (e) => {
-    const selectedFiles = Array.from(e.target.files).slice(0, 3);
+    const selectedFiles = Array.from(e.target.files);
 
-    const onlyImages = selectedFiles.filter(
+    if (selectedFiles.length > 3) {
+      setErrors((prev) => ({
+        ...prev,
+        files: "Maximum 3 images allowed",
+      }));
+    }
+
+    const limitedFiles = selectedFiles.slice(0, 3);
+
+    const onlyImages = limitedFiles.filter(
       (file) => file.type && file.type.startsWith("image/")
     );
 
     setForm((prev) => ({ ...prev, files: onlyImages }));
 
-    if (selectedFiles.length !== onlyImages.length) {
+    if (limitedFiles.length !== onlyImages.length) {
       setErrors((prev) => ({
         ...prev,
         files: "Only image files are allowed",
       }));
-    } else {
+    } else if (selectedFiles.length <= 3) {
       setErrors((prev) => ({
         ...prev,
         files: "",
       }));
     }
+
+    e.target.value = "";
+  };
+
+  const removeSelectedFile = (indexToRemove) => {
+    setForm((prev) => ({
+      ...prev,
+      files: prev.files.filter((_, index) => index !== indexToRemove),
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      files: "",
+    }));
   };
 
   return (
@@ -354,9 +407,17 @@ function CreateTicketForm() {
             {form.files.map((file, i) => (
               <div
                 key={i}
-                className="text-sm text-gray-300 bg-white/5 border border-white/10 rounded-lg px-3 py-2"
+                className="text-sm text-gray-300 bg-white/5 border border-white/10 rounded-lg px-3 py-2 flex items-center justify-between gap-3"
               >
-                {file.name}
+                <span className="truncate">{file.name}</span>
+                <button
+                  type="button"
+                  onClick={() => removeSelectedFile(i)}
+                  className="text-red-400 hover:text-red-300 transition"
+                  title="Remove image"
+                >
+                  <FaTrash />
+                </button>
               </div>
             ))}
           </div>
@@ -383,7 +444,7 @@ function MyTickets() {
 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
 
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
@@ -391,70 +452,122 @@ function MyTickets() {
 
   const [attachments, setAttachments] = useState([]);
   const [attachmentLoading, setAttachmentLoading] = useState(false);
+  const [imageErrors, setImageErrors] = useState({});
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editErrors, setEditErrors] = useState({});
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    category: "Electrical",
+    priority: "Low",
+    building: "Main Building",
+    room: "",
+  });
 
   const { user } = useContext(AuthContext);
   const email = user?.email || localStorage.getItem("email");
+
+  const selectedTicket = useMemo(
+    () => tickets.find((ticket) => ticket.id === selectedTicketId) || null,
+    [tickets, selectedTicketId]
+  );
 
   const fetchTickets = useCallback(async () => {
     try {
       if (!email) return;
 
       const res = await axios.get(`${API}/api/tickets/user/${email}`);
-      setTickets(res.data);
+      const fetchedTickets = res.data || [];
+      setTickets(fetchedTickets);
 
-      if (res.data.length > 0 && !selectedTicket) {
-        setSelectedTicket(res.data[0]);
+      if (fetchedTickets.length > 0) {
+        setSelectedTicketId((prevId) => {
+          const stillExists = fetchedTickets.some((t) => t.id === prevId);
+          return stillExists ? prevId : fetchedTickets[0].id;
+        });
+      } else {
+        setSelectedTicketId(null);
       }
     } catch (err) {
       console.error("Error fetching tickets:", err);
+      setTickets([]);
+      setSelectedTicketId(null);
     } finally {
       setLoading(false);
     }
-  }, [email, selectedTicket]);
+  }, [API, email]);
 
-  const fetchComments = async (ticketId) => {
-    try {
-      const res = await axios.get(
-        `${API}/api/ticket-comments/ticket/${ticketId}`
-      );
-      setComments(res.data);
-    } catch (err) {
-      console.error("Error fetching comments:", err);
-      setComments([]);
-    }
-  };
+  const fetchComments = useCallback(
+    async (ticketId) => {
+      try {
+        const res = await axios.get(
+          `${API}/api/ticket-comments/ticket/${ticketId}`
+        );
+        setComments(res.data || []);
+      } catch (err) {
+        console.error("Error fetching comments:", err);
+        setComments([]);
+      }
+    },
+    [API]
+  );
 
-  const fetchAttachments = async (ticketId) => {
-    try {
-      setAttachmentLoading(true);
-      const res = await axios.get(
-        `${API}/api/ticket-attachments/ticket/${ticketId}`
-      );
-      setAttachments(res.data);
-    } catch (err) {
-      console.error("Error fetching attachments:", err);
-      setAttachments([]);
-    } finally {
-      setAttachmentLoading(false);
-    }
-  };
+  const fetchAttachments = useCallback(
+    async (ticketId) => {
+      try {
+        setAttachmentLoading(true);
+        const res = await axios.get(
+          `${API}/api/ticket-attachments/ticket/${ticketId}`
+        );
+        setAttachments(res.data || []);
+        setImageErrors({});
+      } catch (err) {
+        console.error("Error fetching attachments:", err);
+        setAttachments([]);
+        setImageErrors({});
+      } finally {
+        setAttachmentLoading(false);
+      }
+    },
+    [API]
+  );
 
   useEffect(() => {
     fetchTickets();
   }, [fetchTickets]);
 
   useEffect(() => {
-    if (selectedTicket?.id) {
-      fetchComments(selectedTicket.id);
-      fetchAttachments(selectedTicket.id);
+    if (selectedTicketId) {
+      fetchComments(selectedTicketId);
+      fetchAttachments(selectedTicketId);
     } else {
       setComments([]);
       setAttachments([]);
+      setImageErrors({});
+    }
+  }, [selectedTicketId, fetchComments, fetchAttachments]);
+
+  useEffect(() => {
+    if (selectedTicket) {
+      setEditForm({
+        title: selectedTicket.title || "",
+        description: selectedTicket.description || "",
+        category: selectedTicket.category || "Electrical",
+        priority: selectedTicket.priority || "Low",
+        building: selectedTicket.building || "Main Building",
+        room: selectedTicket.room || "",
+      });
+      setEditErrors({});
+      setIsEditing(false);
     }
   }, [selectedTicket]);
 
   const handleSelectTicket = (ticket) => {
-    setSelectedTicket(ticket);
+    setSelectedTicketId(ticket.id);
+    setIsEditing(false);
+    setEditErrors({});
   };
 
   const handleAddComment = async () => {
@@ -483,15 +596,107 @@ function MyTickets() {
 
   const handleDeleteAttachment = async (attachmentId) => {
     try {
-      const res = await axios.delete(`${API}/api/ticket-attachments/${attachmentId}`);
-      console.log("Delete response:", res.data);
+      const res = await axios.delete(
+        `${API}/api/ticket-attachments/${attachmentId}`
+      );
 
-      await fetchAttachments(selectedTicket.id);
+      if (selectedTicket?.id) {
+        await fetchAttachments(selectedTicket.id);
+      }
+
+      console.log("Delete response:", res.data);
       alert("Attachment deleted successfully");
     } catch (err) {
       console.error("Error deleting attachment:", err);
       console.error("Backend response:", err.response?.data);
-      alert(`Failed to delete attachment: ${err.response?.data || "Unknown error"}`);
+      alert(
+        `Failed to delete attachment: ${
+          err.response?.data || "Unknown error"
+        }`
+      );
+    }
+  };
+
+  const handleImageError = (attachmentId, info) => {
+    console.log("Image failed:", info);
+    setImageErrors((prev) => ({
+      ...prev,
+      [attachmentId]: true,
+    }));
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const validateEditForm = () => {
+    const newErrors = {};
+
+    if (!editForm.title.trim()) {
+      newErrors.title = "Title is required";
+    }
+
+    if (!editForm.description.trim()) {
+      newErrors.description = "Description is required";
+    }
+
+    if (!editForm.room.trim()) {
+      newErrors.room = "Room is required";
+    }
+
+    setEditErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleEditCancel = () => {
+    if (!selectedTicket) return;
+
+    setEditForm({
+      title: selectedTicket.title || "",
+      description: selectedTicket.description || "",
+      category: selectedTicket.category || "Electrical",
+      priority: selectedTicket.priority || "Low",
+      building: selectedTicket.building || "Main Building",
+      room: selectedTicket.room || "",
+    });
+    setEditErrors({});
+    setIsEditing(false);
+  };
+
+  const handleEditSave = async () => {
+    if (!selectedTicket) return;
+    if (!validateEditForm()) return;
+
+    try {
+      setEditLoading(true);
+
+      const payload = {
+        title: editForm.title,
+        description: editForm.description,
+        category: editForm.category,
+        priority: editForm.priority,
+        building: editForm.building,
+        room: editForm.room,
+      };
+
+      await axios.put(`${API}/api/tickets/${selectedTicket.id}`, payload);
+
+      await fetchTickets();
+      setIsEditing(false);
+      alert("✅ Ticket updated successfully");
+    } catch (err) {
+      console.error("Error updating ticket:", err);
+      alert(
+        err.response?.data?.message ||
+          err.response?.data ||
+          "❌ Failed to update ticket"
+      );
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -549,7 +754,6 @@ function MyTickets() {
 
   return (
     <div className="grid lg:grid-cols-2 gap-6">
-      {/* LEFT PANEL */}
       <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
         <h3 className="text-xl font-semibold text-white mb-5">My Tickets</h3>
 
@@ -558,10 +762,11 @@ function MyTickets() {
             <div
               key={ticket.id}
               onClick={() => handleSelectTicket(ticket)}
-              className={`p-4 rounded-xl border cursor-pointer transition flex justify-between items-center ${selectedTicket?.id === ticket.id
+              className={`p-4 rounded-xl border cursor-pointer transition flex justify-between items-center ${
+                selectedTicketId === ticket.id
                   ? "border-[#0A6ED3] bg-[#0B1220]"
                   : "border-white/10 bg-[#000919] hover:bg-[#0B1220]"
-                }`}
+              }`}
             >
               <div>
                 <h4 className="font-semibold text-white">{ticket.title}</h4>
@@ -592,48 +797,178 @@ function MyTickets() {
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
       <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
         {!selectedTicket ? (
           <p className="text-gray-400 text-center mt-20">Select a ticket</p>
         ) : (
           <>
-            <h3 className="text-2xl font-semibold text-[#0A6ED3] mb-5">
-              Ticket Details
-            </h3>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-2xl font-semibold text-[#0A6ED3]">
+                Ticket Details
+              </h3>
 
-            <div className="space-y-2 mb-6">
-              <p className="text-gray-200">
-                <strong className="text-white">Title:</strong>{" "}
-                {selectedTicket.title}
-              </p>
-              <p className="text-gray-200">
-                <strong className="text-white">Description:</strong>{" "}
-                {selectedTicket.description}
-              </p>
-              <p className="text-gray-200">
-                <strong className="text-white">Category:</strong>{" "}
-                {selectedTicket.category}
-              </p>
-              <p className="text-gray-200">
-                <strong className="text-white">Priority:</strong>{" "}
-                {selectedTicket.priority}
-              </p>
-              <p className="text-gray-200">
-                <strong className="text-white">Location:</strong>{" "}
-                {selectedTicket.building} - {selectedTicket.room}
-              </p>
-              <p className="text-gray-200">
-                <strong className="text-white">Status:</strong>{" "}
-                {selectedTicket.status?.replace("_", " ")}
-              </p>
-              <p className="text-gray-200">
-                <strong className="text-white">Assigned Technician:</strong>{" "}
-                {selectedTicket.technicianEmail || "Not Assigned Yet"}
-              </p>
+              {selectedTicket.status === "OPEN" && !isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center gap-2 bg-[#0A6ED3] px-4 py-2 rounded-lg hover:bg-[#085bb0] transition"
+                >
+                  <FaEdit />
+                  Edit Ticket
+                </button>
+              )}
             </div>
 
-            {/* ATTACHMENTS */}
+            {isEditing && selectedTicket.status === "OPEN" ? (
+              <div className="bg-[#0B1220] border border-white/10 rounded-2xl p-5 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">
+                  Edit Ticket
+                </h4>
+
+                <div className="mb-4">
+                  <label className="text-gray-300">Title *</label>
+                  <input
+                    name="title"
+                    value={editForm.title}
+                    onChange={handleEditChange}
+                    className="w-full p-3 mt-1 bg-[#000919] border border-white/10 rounded-lg"
+                  />
+                  {editErrors.title && (
+                    <p className="text-red-400 text-sm mt-1">
+                      {editErrors.title}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mb-4">
+                  <label className="text-gray-300">Description *</label>
+                  <textarea
+                    name="description"
+                    value={editForm.description}
+                    onChange={handleEditChange}
+                    rows="4"
+                    className="w-full p-3 mt-1 bg-[#000919] border border-white/10 rounded-lg"
+                  />
+                  {editErrors.description && (
+                    <p className="text-red-400 text-sm mt-1">
+                      {editErrors.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="text-gray-300 block mb-1">Category</label>
+                    <select
+                      name="category"
+                      value={editForm.category}
+                      onChange={handleEditChange}
+                      className="w-full p-3 bg-[#000919] border border-white/10 rounded-lg"
+                    >
+                      <option>Electrical</option>
+                      <option>Hardware</option>
+                      <option>Network</option>
+                      <option>Facility</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-gray-300 block mb-1">Priority</label>
+                    <select
+                      name="priority"
+                      value={editForm.priority}
+                      onChange={handleEditChange}
+                      className="w-full p-3 bg-[#000919] border border-white/10 rounded-lg"
+                    >
+                      <option>Low</option>
+                      <option>Medium</option>
+                      <option>High</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="text-gray-300 block mb-1">Building</label>
+                    <select
+                      name="building"
+                      value={editForm.building}
+                      onChange={handleEditChange}
+                      className="w-full p-3 bg-[#000919] border border-white/10 rounded-lg"
+                    >
+                      <option>Main Building</option>
+                      <option>New Building</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-gray-300 block mb-1">Room *</label>
+                    <input
+                      name="room"
+                      value={editForm.room}
+                      onChange={handleEditChange}
+                      className="w-full p-3 bg-[#000919] border border-white/10 rounded-lg"
+                    />
+                    {editErrors.room && (
+                      <p className="text-red-400 text-sm mt-1">
+                        {editErrors.room}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={handleEditCancel}
+                    disabled={editLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition disabled:opacity-60"
+                  >
+                    <FaTimes />
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleEditSave}
+                    disabled={editLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0A6ED3] hover:bg-[#085bb0] transition disabled:opacity-60"
+                  >
+                    <FaSave />
+                    {editLoading ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 mb-6">
+                <p className="text-gray-200">
+                  <strong className="text-white">Title:</strong>{" "}
+                  {selectedTicket.title}
+                </p>
+                <p className="text-gray-200">
+                  <strong className="text-white">Description:</strong>{" "}
+                  {selectedTicket.description}
+                </p>
+                <p className="text-gray-200">
+                  <strong className="text-white">Category:</strong>{" "}
+                  {selectedTicket.category}
+                </p>
+                <p className="text-gray-200">
+                  <strong className="text-white">Priority:</strong>{" "}
+                  {selectedTicket.priority}
+                </p>
+                <p className="text-gray-200">
+                  <strong className="text-white">Location:</strong>{" "}
+                  {selectedTicket.building} - {selectedTicket.room}
+                </p>
+                <p className="text-gray-200">
+                  <strong className="text-white">Status:</strong>{" "}
+                  {selectedTicket.status?.replace("_", " ")}
+                </p>
+                <p className="text-gray-200">
+                  <strong className="text-white">Assigned Technician:</strong>{" "}
+                  {selectedTicket.technicianEmail || "Not Assigned Yet"}
+                </p>
+              </div>
+            )}
+
             <div className="border-t border-white/10 pt-5 mb-6">
               <div className="flex items-center gap-2 mb-4">
                 <FaImage className="text-[#0A6ED3]" />
@@ -646,39 +981,52 @@ function MyTickets() {
                 <p className="text-gray-400 text-sm">No attachments</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {attachments.map((att) => (
-                    <div
-                      key={att.id}
-                      className="bg-[#000919] border border-white/10 rounded-xl p-3"
-                    >
-                      <img
-                        src={`${API}/api/ticket-attachments/view?path=${encodeURIComponent(
-                          att.filePath
-                        )}`}
-                        alt={att.fileName}
-                        className="w-full h-40 object-cover rounded-lg mb-3"
-                      />
+                  {attachments.map((att) => {
+                    const imageUrl = `${API}/api/ticket-attachments/view/${att.id}`;
 
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm text-gray-300 truncate">
-                          {att.fileName}
-                        </p>
+                    return (
+                      <div
+                        key={att.id}
+                        className="bg-[#000919] border border-white/10 rounded-xl p-3"
+                      >
+                        {!imageErrors[att.id] ? (
+                          <img
+                            src={imageUrl}
+                            alt={att.fileName}
+                            className="w-full h-40 object-cover rounded-lg mb-3"
+                            onError={() => handleImageError(att.id, att)}
+                          />
+                        ) : (
+                          <div className="w-full h-40 rounded-lg mb-3 bg-white/5 border border-white/10 flex items-center justify-center text-center p-4">
+                            <div>
+                              <FaImage className="mx-auto text-2xl text-gray-500 mb-2" />
+                              <p className="text-sm text-gray-400">
+                                Failed to load image
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
-                        <button
-                          onClick={() => handleDeleteAttachment(att.id)}
-                          className="text-red-400 hover:text-red-300 transition"
-                          title="Delete attachment"
-                        >
-                          <FaTrash />
-                        </button>
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm text-gray-300 truncate">
+                            {att.fileName}
+                          </p>
+
+                          <button
+                            onClick={() => handleDeleteAttachment(att.id)}
+                            className="text-red-400 hover:text-red-300 transition"
+                            title="Delete attachment"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* COMMENTS */}
             <div className="border-t border-white/10 pt-5">
               <div className="flex items-center gap-2 mb-4">
                 <FaComments className="text-[#0A6ED3]" />

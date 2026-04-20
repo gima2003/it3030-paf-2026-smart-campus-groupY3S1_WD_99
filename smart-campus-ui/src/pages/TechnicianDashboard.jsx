@@ -16,7 +16,8 @@ function TechnicianDashboard() {
   const API = "http://localhost:8081";
 
   const { user } = useContext(AuthContext);
-  const technicianEmail = user?.email || localStorage.getItem("email") || "tech01@sliit.lk";
+  const technicianEmail =
+    user?.email || localStorage.getItem("email") || "tech01@sliit.lk";
 
   const [tickets, setTickets] = useState([]);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
@@ -28,6 +29,7 @@ function TechnicianDashboard() {
 
   const [attachments, setAttachments] = useState([]);
   const [attachmentLoading, setAttachmentLoading] = useState(false);
+  const [imageErrors, setImageErrors] = useState({});
 
   const selectedTicket = useMemo(
     () => tickets.find((t) => t.id === selectedTicketId) || null,
@@ -39,9 +41,10 @@ function TechnicianDashboard() {
       const res = await axios.get(
         `${API}/api/tickets/technician/${technicianEmail}`
       );
-      setTickets(res.data);
+      setTickets(res.data || []);
     } catch (err) {
       console.error("Error fetching technician tickets:", err);
+      setTickets([]);
     }
   }, [API, technicianEmail]);
 
@@ -51,7 +54,7 @@ function TechnicianDashboard() {
         const res = await axios.get(
           `${API}/api/ticket-comments/ticket/${ticketId}`
         );
-        setComments(res.data);
+        setComments(res.data || []);
       } catch (err) {
         console.error("Error fetching comments:", err);
         setComments([]);
@@ -67,10 +70,12 @@ function TechnicianDashboard() {
         const res = await axios.get(
           `${API}/api/ticket-attachments/ticket/${ticketId}`
         );
-        setAttachments(res.data);
+        setAttachments(res.data || []);
+        setImageErrors({});
       } catch (err) {
         console.error("Error fetching attachments:", err);
         setAttachments([]);
+        setImageErrors({});
       } finally {
         setAttachmentLoading(false);
       }
@@ -89,6 +94,7 @@ function TechnicianDashboard() {
     } else {
       setComments([]);
       setAttachments([]);
+      setImageErrors({});
     }
   }, [selectedTicketId, fetchComments, fetchAttachments]);
 
@@ -102,13 +108,9 @@ function TechnicianDashboard() {
     if (!selectedTicket) return;
 
     try {
-      await axios.put(
-        `${API}/api/tickets/${selectedTicket.id}/status`,
-        null,
-        {
-          params: { status: newStatus },
-        }
-      );
+      await axios.put(`${API}/api/tickets/${selectedTicket.id}/status`, null, {
+        params: { status: newStatus },
+      });
 
       await fetchAssignedTickets();
       alert("Ticket status updated successfully!");
@@ -140,6 +142,14 @@ function TechnicianDashboard() {
     } finally {
       setCommentLoading(false);
     }
+  };
+
+  const handleImageError = (attachmentId, info) => {
+    console.log("Technician image failed:", info);
+    setImageErrors((prev) => ({
+      ...prev,
+      [attachmentId]: true,
+    }));
   };
 
   const assigned = tickets.length;
@@ -300,25 +310,39 @@ function TechnicianDashboard() {
                   <p className="text-gray-400 text-sm">No attachments</p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {attachments.map((att) => (
-                      <div
-                        key={att.id}
-                        className="bg-[#000919] border border-white/10 rounded-xl p-3"
-                      >
-                        <img
-                          src={`${API}/api/ticket-attachments/view?path=${encodeURIComponent(
-                            att.filePath
-                          )}`}
-                          alt={att.fileName}
-                          className="w-full h-40 object-cover rounded-lg mb-3"
-                          loading="lazy"
-                        />
+                    {attachments.map((att) => {
+                      const imageUrl = `${API}/api/ticket-attachments/view/${att.id}`;
 
-                        <p className="text-sm text-gray-300 truncate">
-                          {att.fileName}
-                        </p>
-                      </div>
-                    ))}
+                      return (
+                        <div
+                          key={att.id}
+                          className="bg-[#000919] border border-white/10 rounded-xl p-3"
+                        >
+                          {!imageErrors[att.id] ? (
+                            <img
+                              src={imageUrl}
+                              alt={att.fileName}
+                              className="w-full h-40 object-cover rounded-lg mb-3"
+                              loading="lazy"
+                              onError={() => handleImageError(att.id, att)}
+                            />
+                          ) : (
+                            <div className="w-full h-40 rounded-lg mb-3 bg-white/5 border border-white/10 flex items-center justify-center text-center p-4">
+                              <div>
+                                <FaImage className="mx-auto text-2xl text-gray-500 mb-2" />
+                                <p className="text-sm text-gray-400">
+                                  Failed to load image
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          <p className="text-sm text-gray-300 truncate">
+                            {att.fileName}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
