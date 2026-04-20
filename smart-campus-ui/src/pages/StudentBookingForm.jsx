@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { createBooking } from "../services/bookingService";
+import { createBooking, checkBookingAvailability } from "../services/bookingService";
 import { getFacilities } from "../services/facilityService";
 
 function StudentBookingForm() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // If user came from a selected resource page, keep that facility preselected
   const selectedResourceId = location.state?.resourceId || "";
 
   const [facilities, setFacilities] = useState([]);
   const [loadingFacilities, setLoadingFacilities] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Main booking form state
   const [formData, setFormData] = useState({
     userId: "",
     resourceId: selectedResourceId,
@@ -23,9 +25,15 @@ function StudentBookingForm() {
     attendees: "",
   });
 
+  // Top-level form alerts
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Real-time availability state
+  const [availability, setAvailability] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  // Initial load
   useEffect(() => {
     fetchFacilities();
 
@@ -38,6 +46,65 @@ function StudentBookingForm() {
     }));
   }, [selectedResourceId]);
 
+  // Real-time availability check
+  useEffect(() => {
+    const shouldCheck =
+      formData.resourceId &&
+      formData.date &&
+      formData.startTime &&
+      formData.endTime;
+
+    // If required fields are not filled, clear the availability box
+    if (!shouldCheck) {
+      setAvailability(null);
+      return;
+    }
+
+    // Frontend-side quick validation before API call
+    if (formData.startTime >= formData.endTime) {
+      setAvailability({
+        available: false,
+        message: "End time must be later than start time.",
+        suggestions: [],
+      });
+      return;
+    }
+
+    const runAvailabilityCheck = async () => {
+      try {
+        setCheckingAvailability(true);
+
+        const payload = {
+          resourceType: "FACILITY",
+          facilityId: Number(formData.resourceId),
+          bookingDate: formData.date,
+          startTime: `${formData.startTime}:00`,
+          endTime: `${formData.endTime}:00`,
+        };
+
+        const result = await checkBookingAvailability(payload);
+        setAvailability(result);
+      } catch (error) {
+        console.error("Availability check failed:", error);
+        setAvailability({
+          available: false,
+          message: "Failed to check availability.",
+          suggestions: [],
+        });
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    // Small delay so API is not called too aggressively while user is changing fields
+    const timeoutId = setTimeout(() => {
+      runAvailabilityCheck();
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.resourceId, formData.date, formData.startTime, formData.endTime]);
+
+  // Load facility dropdown data
   const fetchFacilities = async () => {
     try {
       setLoadingFacilities(true);
@@ -51,8 +118,12 @@ function StudentBookingForm() {
     }
   };
 
+  // Generic input handler
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    setSuccessMessage("");
+    setErrorMessage("");
 
     setFormData((prev) => ({
       ...prev,
@@ -60,18 +131,38 @@ function StudentBookingForm() {
     }));
   };
 
+  // When user clicks a suggested time slot, auto-fill start/end times
+  const handleSuggestionClick = (slot) => {
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    setFormData((prev) => ({
+      ...prev,
+      startTime: slot.startTime.slice(0, 5),
+      endTime: slot.endTime.slice(0, 5),
+    }));
+  };
+
+  // Final validation before create booking
   const validateForm = () => {
     if (!formData.resourceId) return "Please select a facility.";
     if (!formData.date) return "Please select a booking date.";
     if (!formData.startTime) return "Please select a start time.";
     if (!formData.endTime) return "Please select an end time.";
     if (!formData.purpose.trim()) return "Please enter a purpose.";
+
     if (formData.startTime >= formData.endTime) {
       return "End time must be later than start time.";
     }
+
+    if (availability && !availability.available) {
+      return availability.message || "Selected time slot is not available.";
+    }
+
     return "";
   };
 
+  // Submit booking request
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -86,10 +177,11 @@ function StudentBookingForm() {
 
     const payload = {
       userId: Number(formData.userId),
-      resourceId: Number(formData.resourceId),
-      date: formData.date,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
+      resourceType: "FACILITY",
+      facilityId: Number(formData.resourceId),
+      bookingDate: formData.date,
+      startTime: `${formData.startTime}:00`,
+      endTime: `${formData.endTime}:00`,
       purpose: formData.purpose,
       attendees: formData.attendees ? Number(formData.attendees) : 0,
     };
@@ -108,7 +200,8 @@ function StudentBookingForm() {
 
       const backendMessage =
         error?.response?.data?.message ||
-        error?.response?.data ||
+        error?.response?.data?.error ||
+        (typeof error?.response?.data === "string" ? error.response.data : null) ||
         "Failed to submit booking request.";
 
       setErrorMessage(
@@ -121,9 +214,11 @@ function StudentBookingForm() {
     }
   };
 
+  // Reset form
   const handleClear = () => {
     setSuccessMessage("");
     setErrorMessage("");
+    setAvailability(null);
 
     setFormData((prev) => ({
       ...prev,
@@ -261,6 +356,49 @@ function StudentBookingForm() {
                 </div>
               </div>
 
+              {/* Real-time availability box + suggested slots */}
+              {(checkingAvailability || availability) && (
+                <div
+                  className={`rounded-xl px-4 py-3 text-sm border ${
+                    checkingAvailability
+                      ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-300"
+                      : availability?.available
+                      ? "border-green-500/30 bg-green-500/10 text-green-300"
+                      : "border-red-500/30 bg-red-500/10 text-red-300"
+                  }`}
+                >
+                  <p>
+                    {checkingAvailability
+                      ? "Checking availability..."
+                      : availability?.message}
+                  </p>
+
+                  {/* Show suggested slots only when booking is unavailable */}
+                  {!checkingAvailability &&
+                    availability &&
+                    !availability.available &&
+                    availability.suggestions &&
+                    availability.suggestions.length > 0 && (
+                      <div className="mt-3">
+                        <p className="font-medium mb-2">Suggested available slots:</p>
+
+                        <div className="flex flex-wrap gap-2">
+                          {availability.suggestions.map((slot, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => handleSuggestionClick(slot)}
+                              className="px-3 py-2 rounded-lg border border-red-400/30 bg-[#0b1730] hover:bg-white/5 text-white transition"
+                            >
+                              {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              )}
+
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-300">
                   Purpose
@@ -293,8 +431,12 @@ function StudentBookingForm() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="bg-[#0A6ED3] hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl transition disabled:opacity-60"
+                  disabled={
+                    submitting ||
+                    checkingAvailability ||
+                    (availability && !availability.available)
+                  }
+                  className="bg-[#0A6ED3] hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {submitting ? "Submitting..." : "Submit Booking"}
                 </button>

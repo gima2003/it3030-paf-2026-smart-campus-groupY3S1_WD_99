@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { cancelBooking, getUserBookings } from "../services/bookingService";
+import {
+  cancelBooking,
+  deleteBooking,
+  getUserBookings,
+} from "../services/bookingService";
+
+import { Link } from "react-router-dom";
 
 function StudentBookings() {
   const [bookings, setBookings] = useState([]);
@@ -32,7 +38,38 @@ function StudentBookings() {
       fetchBookings();
     } catch (error) {
       console.error("Cancel failed:", error);
-      setMessage("Failed to cancel booking.");
+
+      const backendMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        (typeof error?.response?.data === "string" ? error.response.data : null) ||
+        "Failed to cancel booking.";
+
+      setMessage(backendMessage);
+    }
+  };
+
+  const handleDelete = async (bookingId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this booking?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deleteBooking(bookingId);
+      setMessage("Booking deleted successfully.");
+      fetchBookings();
+    } catch (error) {
+      console.error("Delete failed:", error);
+
+      const backendMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        (typeof error?.response?.data === "string" ? error.response.data : null) ||
+        "Failed to delete booking.";
+
+      setMessage(backendMessage);
     }
   };
 
@@ -53,13 +90,26 @@ function StudentBookings() {
   return (
     <div className="bg-[#000919] min-h-screen p-6 md:p-8 text-white">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-3xl font-semibold mb-2">My Bookings</h2>
-          <p className="text-gray-400">
-            View the status of your submitted booking requests.
-          </p>
+
+        {/* 🔹 HEADER SECTION (UPDATED) */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-semibold mb-2">My Bookings</h2>
+            <p className="text-gray-400">
+              View the status of your submitted booking requests.
+            </p>
+          </div>
+
+          {/* ✅ NEW BUTTON: View Calendar */}
+          <Link
+            to="/student/bookings/calendar"
+            className="bg-[#0A6ED3] hover:bg-blue-600 text-white font-semibold px-5 py-3 rounded-xl transition"
+          >
+            View Calendar
+          </Link>
         </div>
 
+        {/* STATS CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
           <div className="bg-[#081225] p-5 rounded-2xl border border-white/10">
             <p className="text-gray-400 text-sm">Total Bookings</p>
@@ -98,13 +148,14 @@ function StudentBookings() {
           </div>
         )}
 
+        {/* TABLE */}
         <div className="bg-[#081225] p-6 rounded-2xl border border-white/10 overflow-x-auto">
           {loading ? (
             <p className="text-gray-400">Loading bookings...</p>
           ) : bookings.length === 0 ? (
             <p className="text-gray-400">No recent bookings found.</p>
           ) : (
-            <table className="w-full text-left min-w-[900px]">
+            <table className="w-full text-left min-w-[950px]">
               <thead>
                 <tr className="text-gray-400 border-b border-white/10">
                   <th className="py-3 px-3">Facility</th>
@@ -121,33 +172,46 @@ function StudentBookings() {
                 {bookings.map((booking) => (
                   <tr key={booking.id} className="border-b border-white/5">
                     <td className="py-4 px-3 font-medium">
-                      {booking.resourceName || booking.facilityName || `#${booking.resourceId}`}
+                      {booking.facilityName || booking.equipmentName || "-"}
                     </td>
-                    <td className="py-4 px-3">{booking.date}</td>
+                    <td className="py-4 px-3">{booking.bookingDate || "-"}</td>
                     <td className="py-4 px-3">
                       {booking.startTime} - {booking.endTime}
                     </td>
                     <td className="py-4 px-3 max-w-[220px] truncate">
-                      {booking.purpose}
+                      {booking.purpose || "-"}
                     </td>
-                    <td className="py-4 px-3">{booking.attendees}</td>
+                    <td className="py-4 px-3">{booking.attendees ?? "-"}</td>
                     <td className="py-4 px-3">
                       <span className={getStatusBadge(booking.status)}>
                         {booking.status}
                       </span>
                     </td>
                     <td className="py-4 px-3 text-gray-400">
-                      {booking.reason || "-"}
+                      {booking.adminReason || "-"}
                     </td>
                     <td className="py-4 px-3">
-                      {booking.status === "APPROVED" && (
-                        <button
-                          onClick={() => handleCancel(booking.id)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
-                        >
-                          Cancel
-                        </button>
-                      )}
+                      <div className="flex gap-2">
+                        {booking.status === "APPROVED" && (
+                          <button
+                            onClick={() => handleCancel(booking.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
+                          >
+                            Cancel
+                          </button>
+                        )}
+
+                        {(booking.status === "PENDING" ||
+                          booking.status === "REJECTED" ||
+                          booking.status === "CANCELLED") && (
+                          <button
+                            onClick={() => handleDelete(booking.id)}
+                            className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

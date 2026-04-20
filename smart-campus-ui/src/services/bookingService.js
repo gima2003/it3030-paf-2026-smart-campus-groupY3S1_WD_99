@@ -3,10 +3,15 @@ import api from "./api";
 /*
   Booking Service
   ---------------
-  Uses PUT because backend controller methods are:
-  @PutMapping("/{bookingId}/approve")
-  @PutMapping("/{bookingId}/reject")
-  @PutMapping("/{bookingId}/cancel")
+  Backend endpoints:
+  POST   /bookings
+  GET    /bookings
+  GET    /bookings/user/{id}
+  PUT    /bookings/{id}/approve
+  PUT    /bookings/{id}/reject
+  PUT    /bookings/{id}/cancel
+  DELETE /bookings/{id}
+  POST   /bookings/check-availability
 */
 
 export const createBooking = async (bookingData) => {
@@ -71,6 +76,26 @@ export const cancelBooking = async (bookingId, reason = "") => {
     return response.data;
   } catch (error) {
     console.error(`Error cancelling booking ${bookingId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteBooking = async (bookingId) => {
+  try {
+    const response = await api.delete(`/bookings/${bookingId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting booking ${bookingId}:`, error);
+    throw error;
+  }
+};
+
+export const checkBookingAvailability = async (availabilityData) => {
+  try {
+    const response = await api.post("/bookings/check-availability", availabilityData);
+    return response.data;
+  } catch (error) {
+    console.error("Error checking booking availability:", error);
     throw error;
   }
 };

@@ -22,6 +22,7 @@ import StudentLayout from "./pages/StudentLayout";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentTickets from "./pages/StudentTickets";
 import StudentBookings from "./pages/StudentBookings";
+import StudentBookingCalendar from "./pages/StudentBookingCalendar";
 import StudentResources from "./pages/StudentResources";
 import StudentReport from "./pages/StudentReport";
 import StudentNotifications from "./pages/StudentNotifications";
@@ -76,6 +77,7 @@ function App() {
             <Route path="tickets" element={<StudentTickets />} />
             <Route path="bookings" element={<StudentBookings />} />
             <Route path="bookings/new" element={<StudentBookingForm />} />
+            <Route path="/student/bookings/calendar" element={<StudentBookingCalendar />} />
             <Route path="resources" element={<StudentResources />} />
             <Route path="report" element={<StudentReport />} />
             <Route path="notifications" element={<StudentNotifications />} />

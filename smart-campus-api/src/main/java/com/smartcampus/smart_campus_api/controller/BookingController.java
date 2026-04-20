@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.smartcampus.smart_campus_api.dto.AvailabilityCheckRequestDto;
+import com.smartcampus.smart_campus_api.dto.AvailabilityCheckResponseDto;
+
 import java.util.List;
 
 @RestController
@@ -25,6 +28,13 @@ public class BookingController {
     public ResponseEntity<BookingResponseDto> createBooking(@RequestBody BookingRequestDto requestDto) {
         BookingResponseDto response = bookingService.createBooking(requestDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/check-availability")
+    public ResponseEntity<AvailabilityCheckResponseDto> checkAvailability(
+            @RequestBody AvailabilityCheckRequestDto requestDto
+    ) {
+        return ResponseEntity.ok(bookingService.checkAvailability(requestDto));
     }
 
     @GetMapping
@@ -59,5 +69,11 @@ public class BookingController {
             @RequestBody(required = false) BookingDecisionDto decisionDto
     ) {
         return ResponseEntity.ok(bookingService.cancelBooking(bookingId, decisionDto));
+    }
+
+    @DeleteMapping("/{bookingId}")
+    public ResponseEntity<String> deleteBooking(@PathVariable Long bookingId) {
+        bookingService.deleteBooking(bookingId);
+        return ResponseEntity.ok("Booking deleted successfully");
     }
 }

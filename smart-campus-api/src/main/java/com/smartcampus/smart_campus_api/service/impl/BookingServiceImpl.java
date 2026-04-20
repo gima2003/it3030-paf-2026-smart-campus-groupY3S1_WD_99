@@ -1,8 +1,11 @@
 package com.smartcampus.smart_campus_api.service.impl;
 
+import com.smartcampus.smart_campus_api.dto.AvailabilityCheckRequestDto;
+import com.smartcampus.smart_campus_api.dto.AvailabilityCheckResponseDto;
 import com.smartcampus.smart_campus_api.dto.BookingDecisionDto;
 import com.smartcampus.smart_campus_api.dto.BookingRequestDto;
 import com.smartcampus.smart_campus_api.dto.BookingResponseDto;
+import com.smartcampus.smart_campus_api.dto.TimeSlotSuggestionDto;
 import com.smartcampus.smart_campus_api.entity.*;
 import com.smartcampus.smart_campus_api.entity.Resource_enum.AssetStatus;
 import com.smartcampus.smart_campus_api.repository.BookingRepository;
@@ -12,8 +15,10 @@ import com.smartcampus.smart_campus_api.repository.UserRepository;
 import com.smartcampus.smart_campus_api.service.BookingService;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -188,6 +193,151 @@ public class BookingServiceImpl implements BookingService {
         booking.setAdminReason(decisionDto != null ? decisionDto.getReason() : null);
 
         return mapToDto(bookingRepository.save(booking));
+    }
+
+    @Override
+    public void deleteBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (booking.getStatus() == BookingStatus.APPROVED) {
+            throw new RuntimeException("Approved bookings cannot be deleted");
+        }
+
+        bookingRepository.delete(booking);
+    }
+
+    @Override
+    public AvailabilityCheckResponseDto checkAvailability(AvailabilityCheckRequestDto requestDto) {
+
+        if (requestDto.getResourceType() == null) {
+            return new AvailabilityCheckResponseDto(false, "Resource type is required.", new ArrayList<>());
+        }
+
+        if (requestDto.getBookingDate() == null || requestDto.getStartTime() == null || requestDto.getEndTime() == null) {
+            return new AvailabilityCheckResponseDto(false, "Booking date, start time, and end time are required.", new ArrayList<>());
+        }
+
+        if (!requestDto.getStartTime().isBefore(requestDto.getEndTime())) {
+            return new AvailabilityCheckResponseDto(false, "Start time must be before end time.", new ArrayList<>());
+        }
+
+        boolean conflict = false;
+
+        if (requestDto.getResourceType() == BookingResourceType.FACILITY) {
+            if (requestDto.getFacilityId() == null) {
+                return new AvailabilityCheckResponseDto(false, "Facility ID is required for facility bookings.", new ArrayList<>());
+            }
+
+            conflict = bookingRepository.existsByFacility_IdAndBookingDateAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
+                    requestDto.getFacilityId(),
+                    requestDto.getBookingDate(),
+                    BookingStatus.APPROVED,
+                    requestDto.getEndTime(),
+                    requestDto.getStartTime()
+            );
+
+            if (conflict) {
+                List<TimeSlotSuggestionDto> suggestions = generateFacilityTimeSuggestions(
+                        requestDto.getFacilityId(),
+                        requestDto.getBookingDate(),
+                        requestDto.getStartTime(),
+                        requestDto.getEndTime()
+                );
+
+                return new AvailabilityCheckResponseDto(
+                        false,
+                        "Selected time slot is already booked.",
+                        suggestions
+                );
+            }
+        }
+
+        if (requestDto.getResourceType() == BookingResourceType.EQUIPMENT) {
+            if (requestDto.getEquipmentId() == null) {
+                return new AvailabilityCheckResponseDto(false, "Equipment ID is required for equipment bookings.", new ArrayList<>());
+            }
+
+            conflict = bookingRepository.existsByEquipment_IdAndBookingDateAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
+                    requestDto.getEquipmentId(),
+                    requestDto.getBookingDate(),
+                    BookingStatus.APPROVED,
+                    requestDto.getEndTime(),
+                    requestDto.getStartTime()
+            );
+
+            if (conflict) {
+                return new AvailabilityCheckResponseDto(
+                        false,
+                        "Selected time slot is already booked.",
+                        new ArrayList<>()
+                );
+            }
+        }
+
+        return new AvailabilityCheckResponseDto(
+                true,
+                "Selected time slot is available.",
+                new ArrayList<>()
+        );
+    }
+
+    private List<TimeSlotSuggestionDto> generateFacilityTimeSuggestions(
+            Long facilityId,
+            LocalDate bookingDate,
+            LocalTime requestedStartTime,
+            LocalTime requestedEndTime
+    ) {
+        List<Booking> approvedBookings = bookingRepository
+                .findByFacility_IdAndBookingDateAndStatusOrderByStartTimeAsc(
+                        facilityId,
+                        bookingDate,
+                        BookingStatus.APPROVED
+                );
+
+        List<TimeSlotSuggestionDto> suggestions = new ArrayList<>();
+
+        LocalTime workingDayStart = LocalTime.of(8, 0);
+        LocalTime workingDayEnd = LocalTime.of(18, 0);
+
+        long requestedMinutes = Duration.between(requestedStartTime, requestedEndTime).toMinutes();
+
+        LocalTime candidateStart = workingDayStart;
+
+        for (Booking booking : approvedBookings) {
+            LocalTime bookedStart = booking.getStartTime();
+            LocalTime bookedEnd = booking.getEndTime();
+
+            long gapMinutes = Duration.between(candidateStart, bookedStart).toMinutes();
+
+            if (gapMinutes >= requestedMinutes) {
+                LocalTime suggestionEnd = candidateStart.plusMinutes(requestedMinutes);
+                suggestions.add(new TimeSlotSuggestionDto(
+                        candidateStart.toString(),
+                        suggestionEnd.toString()
+                ));
+            }
+
+            if (bookedEnd.isAfter(candidateStart)) {
+                candidateStart = bookedEnd;
+            }
+
+            if (suggestions.size() >= 3) {
+                return suggestions;
+            }
+        }
+
+        long remainingMinutes = Duration.between(candidateStart, workingDayEnd).toMinutes();
+
+        if (remainingMinutes >= requestedMinutes && suggestions.size() < 3) {
+            LocalTime suggestionEnd = candidateStart.plusMinutes(requestedMinutes);
+            suggestions.add(new TimeSlotSuggestionDto(
+                    candidateStart.toString(),
+                    suggestionEnd.toString()
+            ));
+        }
+
+        return suggestions;
     }
 
     private void validateBookingRequest(BookingRequestDto requestDto) {
