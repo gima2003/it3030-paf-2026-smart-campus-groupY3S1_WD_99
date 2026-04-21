@@ -16,6 +16,7 @@ public class EquipmentResponseDto {
     private Boolean active;
     private List<Long> facilityIds;
     private List<String> facilityNames;
+    private String currentLocation;
 
     public EquipmentResponseDto() {
     }
@@ -98,5 +99,13 @@ public class EquipmentResponseDto {
 
     public void setFacilityNames(List<String> facilityNames) {
         this.facilityNames = facilityNames;
+    }
+
+    public String getCurrentLocation() {
+    return currentLocation;
+    }
+
+    public void setCurrentLocation(String currentLocation) {
+        this.currentLocation = currentLocation;
     }
 }

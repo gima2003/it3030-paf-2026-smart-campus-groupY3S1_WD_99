@@ -13,6 +13,8 @@ import {
   Plus,
   Trash2,
   Save,
+  Eye,
+  Wrench,
 } from "lucide-react";
 
 const FACILITY_API_URL = "http://localhost:8081/api/facilities";
@@ -101,6 +103,7 @@ const normalizeEquipmentListItem = (equipment) => ({
   status: equipment.status || "ACTIVE",
   quantity: equipment.quantity ?? 0,
   location: equipment.currentLocation || "",
+  description: equipment.description || "",
   facilityIds: equipment.facilityIds || [],
   facilityNames: equipment.facilityNames || [],
   imageUrl: "",
@@ -218,7 +221,93 @@ function ImageSlider({ images, title }) {
   );
 }
 
-function LinkedEquipmentCards({ items, onRemove }) {
+function EquipmentQuickViewModal({ item, onClose }) {
+  if (!item) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
+      <div className="w-full max-w-2xl bg-[#000919] border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-white truncate">
+              {item.name}
+            </h3>
+            <p className="text-xs text-gray-400 mt-1">Equipment details</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-white hover:bg-white/10 p-2 rounded-xl transition"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-5">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+              <div className="w-full h-56 rounded-2xl overflow-hidden bg-[#001233] border border-white/10 flex items-center justify-center">
+                {item.imageUrl ? (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Package size={32} className="text-white/20" />
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <InfoCard icon={Package} label="Code" value={item.code || "N/A"} />
+              <InfoCard
+                icon={Filter}
+                label="Status"
+                value={formatEnum(item.status)}
+              />
+              <InfoCard
+                icon={Wrench}
+                label="Type"
+                value={formatEnum(item.type)}
+              />
+              <InfoCard
+                icon={Users}
+                label="Quantity"
+                value={item.quantity ?? 0}
+              />
+              <InfoCard
+                icon={MapPin}
+                label="Location"
+                value={item.location || "N/A"}
+              />
+              <InfoCard
+                icon={Building2}
+                label="Linked Facilities"
+                value={item.facilityNames?.length || 0}
+              />
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
+            <p className="text-xs text-gray-400 mb-1">Description</p>
+            <p className="text-sm text-white leading-6">
+              {item.description || "No description"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LinkedEquipmentSection({ items, onRemove, onView, deletingId }) {
+  const quantitySummaryItems = useMemo(
+    () => items.filter((item) => Number(item.quantity) >= 1),
+    [items]
+  );
+
   if (!items.length) {
     return (
       <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-gray-400">
@@ -228,45 +317,107 @@ function LinkedEquipmentCards({ items, onRemove }) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-start gap-3"
-        >
-          <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#001233] border border-white/10 flex items-center justify-center shrink-0">
-            {item.imageUrl ? (
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Package size={20} className="text-white/20" />
-            )}
-          </div>
+    <div className="space-y-5">
+      {quantitySummaryItems.length > 0 && (
+        <div>
+          <p className="text-xs text-gray-400 mb-3">
+            Equipment quantity summary
+          </p>
 
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-white font-medium truncate">{item.name}</p>
-            <p className="text-xs text-gray-400 mt-1">{formatEnum(item.type)}</p>
-            <span
-              className={`inline-flex mt-2 px-2 py-0.5 rounded-full text-[11px] ${badgeClass(
-                item.status
-              )}`}
-            >
-              {formatEnum(item.status)}
-            </span>
+          <div className="flex flex-wrap gap-3">
+            {quantitySummaryItems.map((item) => (
+              <div
+                key={`summary-${item.id}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#001233] border border-white/10"
+              >
+                <Wrench size={14} className="text-[#6CB6FF]" />
+                <span className="text-sm text-gray-300">
+                  {formatEnum(item.type) || item.name}
+                </span>
+                <span className="text-sm font-semibold text-white">
+                  {item.quantity}
+                </span>
+              </div>
+            ))}
           </div>
-
-          <button
-            type="button"
-            onClick={() => onRemove(item.id)}
-            className="text-red-300 hover:text-red-200 hover:bg-red-500/10 p-2 rounded-lg transition"
-          >
-            <Trash2 size={14} />
-          </button>
         </div>
-      ))}
+      )}
+
+      <div>
+        <p className="text-xs text-gray-400 mb-2">Linked equipment list</p>
+
+        <div className="border border-white/10 rounded-2xl overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="bg-white/5 border-b border-white/10">
+              <tr className="text-left text-[11px] text-gray-400">
+                <th className="px-3 py-2.5">Code</th>
+                <th className="px-3 py-2.5">Name</th>
+                <th className="px-3 py-2.5">Type</th>
+                <th className="px-3 py-2.5">Location</th>
+                <th className="px-3 py-2.5">Qty</th>
+                <th className="px-3 py-2.5">Status</th>
+                <th className="px-3 py-2.5 text-center">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {items.map((item) => (
+                <tr
+                  key={item.id}
+                  className="border-b border-white/10 hover:bg-white/5 transition"
+                >
+                  <td className="px-3 py-2.5 text-white/75 whitespace-nowrap">
+                    {item.code || "N/A"}
+                  </td>
+                  <td className="px-3 py-2.5 text-white font-medium max-w-[150px] truncate">
+                    {item.name}
+                  </td>
+                  <td className="px-3 py-2.5 text-white/70 max-w-[120px] truncate">
+                    {formatEnum(item.type)}
+                  </td>
+                  <td className="px-3 py-2.5 text-white/70 max-w-[140px] truncate">
+                    {item.location || "N/A"}
+                  </td>
+                  <td className="px-3 py-2.5 text-white/70 whitespace-nowrap">
+                    {item.quantity ?? 0}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${badgeClass(
+                        item.status
+                      )}`}
+                    >
+                      {formatEnum(item.status)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => onView(item)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#0A6ED3]/15 text-[#6CB6FF] border border-[#0A6ED3]/25 hover:bg-[#0A6ED3]/25 transition"
+                      >
+                        <Eye size={12} />
+                        View
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onRemove(item.id)}
+                        disabled={deletingId === item.id}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-red-300 border border-red-500/25 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-50 transition"
+                      >
+                        <Trash2 size={12} />
+                        {deletingId === item.id ? "..." : "Delete"}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -283,10 +434,13 @@ export default function ResourceDetailsModal({
   const [linkedEquipmentCards, setLinkedEquipmentCards] = useState([]);
   const [equipmentSearch, setEquipmentSearch] = useState("");
   const [equipmentStatusFilter, setEquipmentStatusFilter] = useState("ALL");
+  const [equipmentTypeFilter, setEquipmentTypeFilter] = useState("ALL");
   const [selectedEquipmentIds, setSelectedEquipmentIds] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingLinks, setIsSavingLinks] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [viewingEquipment, setViewingEquipment] = useState(null);
+  const [deletingEquipmentId, setDeletingEquipmentId] = useState(null);
 
   const isFacility = resource?.resourceCategory === "FACILITY";
   const resourceId = resource?.id;
@@ -339,12 +493,34 @@ export default function ResourceDetailsModal({
           const linkedWithImages = await Promise.all(
             linkedBase.map(async (item) => {
               try {
-                const res = await axios.get(getEquipmentImagesUrl(item.id));
-                const imgs = res.data || [];
+                const [imageResForEquipment, detailResForEquipment] =
+                  await Promise.all([
+                    axios.get(getEquipmentImagesUrl(item.id)).catch(() => ({
+                      data: [],
+                    })),
+                    axios
+                      .get(`${EQUIPMENT_API_URL}/${item.id}`)
+                      .catch(() => ({ data: {} })),
+                  ]);
+
+                const imgs = imageResForEquipment.data || [];
                 const primary = imgs.find((img) => img.isPrimary) || imgs[0];
+                const equipmentDetail = detailResForEquipment.data || {};
 
                 return {
                   ...item,
+                  description: equipmentDetail.description || item.description || "",
+                  quantity:
+                    equipmentDetail.quantity !== undefined
+                      ? equipmentDetail.quantity
+                      : item.quantity,
+                  location:
+                    equipmentDetail.currentLocation || item.location || "",
+                  status: equipmentDetail.status || item.status,
+                  type: equipmentDetail.equipmentType || item.type,
+                  facilityIds: equipmentDetail.facilityIds || item.facilityIds || [],
+                  facilityNames:
+                    equipmentDetail.facilityNames || item.facilityNames || [],
                   imageUrl: primary?.imageUrl || "",
                 };
               } catch {
@@ -385,7 +561,10 @@ export default function ResourceDetailsModal({
       setSelectedEquipmentIds([]);
       setEquipmentSearch("");
       setEquipmentStatusFilter("ALL");
+      setEquipmentTypeFilter("ALL");
       setErrorMessage("");
+      setViewingEquipment(null);
+      setDeletingEquipmentId(null);
     }
   }, [isOpen]);
 
@@ -416,6 +595,24 @@ export default function ResourceDetailsModal({
     });
   }, [allEquipment, detail, isFacility]);
 
+  const equipmentTypeOptions = useMemo(() => {
+    const uniqueTypes = [
+      ...new Set(
+        availableEquipment
+          .map((item) => item.type)
+          .filter((type) => String(type || "").trim() !== "")
+      ),
+    ];
+
+    return [
+      { value: "ALL", label: "All Types" },
+      ...uniqueTypes.map((type) => ({
+        value: type,
+        label: formatEnum(type),
+      })),
+    ];
+  }, [availableEquipment]);
+
   const filteredAvailableEquipment = useMemo(() => {
     return availableEquipment.filter((item) => {
       const query = equipmentSearch.toLowerCase();
@@ -430,9 +627,17 @@ export default function ResourceDetailsModal({
         equipmentStatusFilter === "ALL" ||
         item.status === equipmentStatusFilter;
 
-      return matchesSearch && matchesStatus;
+      const matchesType =
+        equipmentTypeFilter === "ALL" || item.type === equipmentTypeFilter;
+
+      return matchesSearch && matchesStatus && matchesType;
     });
-  }, [availableEquipment, equipmentSearch, equipmentStatusFilter]);
+  }, [
+    availableEquipment,
+    equipmentSearch,
+    equipmentStatusFilter,
+    equipmentTypeFilter,
+  ]);
 
   const handleToggleEquipmentSelection = (equipmentId) => {
     setSelectedEquipmentIds((prev) =>
@@ -452,12 +657,33 @@ export default function ResourceDetailsModal({
     const selectedWithImages = await Promise.all(
       selectedItems.map(async (item) => {
         try {
-          const res = await axios.get(getEquipmentImagesUrl(item.id));
-          const imgs = res.data || [];
+          const [imageResForEquipment, detailResForEquipment] =
+            await Promise.all([
+              axios.get(getEquipmentImagesUrl(item.id)).catch(() => ({
+                data: [],
+              })),
+              axios.get(`${EQUIPMENT_API_URL}/${item.id}`).catch(() => ({
+                data: {},
+              })),
+            ]);
+
+          const imgs = imageResForEquipment.data || [];
           const primary = imgs.find((img) => img.isPrimary) || imgs[0];
+          const equipmentDetail = detailResForEquipment.data || {};
 
           return {
             ...item,
+            description: equipmentDetail.description || "",
+            quantity:
+              equipmentDetail.quantity !== undefined
+                ? equipmentDetail.quantity
+                : item.quantity,
+            location: equipmentDetail.currentLocation || item.location || "",
+            status: equipmentDetail.status || item.status,
+            type: equipmentDetail.equipmentType || item.type,
+            facilityIds: equipmentDetail.facilityIds || item.facilityIds || [],
+            facilityNames:
+              equipmentDetail.facilityNames || item.facilityNames || [],
             imageUrl: primary?.imageUrl || "",
           };
         } catch {
@@ -476,20 +702,62 @@ export default function ResourceDetailsModal({
     setSelectedEquipmentIds([]);
   };
 
-  const handleRemoveLinkedEquipment = (equipmentId) => {
+  const handleDeleteAndSaveLinkedEquipment = async (equipmentId) => {
     if (!detail || !isFacility) return;
 
-    const removeIndex = detail.equipmentIds.findIndex((id) => id === equipmentId);
+    const selectedItem = linkedEquipmentCards.find((item) => item.id === equipmentId);
 
-    setDetail((prev) => ({
-      ...prev,
-      equipmentIds: prev.equipmentIds.filter((id) => id !== equipmentId),
-      equipmentNames: prev.equipmentNames.filter((_, index) => index !== removeIndex),
-    }));
-
-    setLinkedEquipmentCards((prev) =>
-      prev.filter((item) => item.id !== equipmentId)
+    const confirmed = window.confirm(
+      `Are you sure you want to remove "${
+        selectedItem?.name || "this equipment"
+      }" from this facility?`
     );
+
+    if (!confirmed) return;
+
+    const updatedEquipmentIds = detail.equipmentIds.filter((id) => id !== equipmentId);
+    const removeIndex = detail.equipmentIds.findIndex((id) => id === equipmentId);
+    const updatedEquipmentNames = detail.equipmentNames.filter(
+      (_, index) => index !== removeIndex
+    );
+
+    try {
+      setDeletingEquipmentId(equipmentId);
+
+      const payload = {
+        name: detail.name,
+        code: detail.resourceCode,
+        description: detail.description,
+        facilityType: detail.type,
+        building: detail.location,
+        capacity: Number(detail.capacity) || 0,
+        indoorOutdoor: detail.indoorOutdoor,
+        status: detail.status,
+        active: detail.isBookable,
+        equipmentIds: updatedEquipmentIds,
+      };
+
+      await axios.put(`${FACILITY_API_URL}/${detail.id}`, payload);
+
+      setDetail((prev) => ({
+        ...prev,
+        equipmentIds: updatedEquipmentIds,
+        equipmentNames: updatedEquipmentNames,
+      }));
+
+      setLinkedEquipmentCards((prev) =>
+        prev.filter((item) => item.id !== equipmentId)
+      );
+
+      if (onResourceUpdated) {
+        await onResourceUpdated();
+      }
+    } catch (error) {
+      console.error("Failed to remove linked equipment:", error);
+      alert("Failed to remove linked equipment");
+    } finally {
+      setDeletingEquipmentId(null);
+    }
   };
 
   const handleSaveFacilityEquipmentLinks = async () => {
@@ -527,251 +795,296 @@ export default function ResourceDetailsModal({
   if (!isOpen || !resource) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 py-5">
-      <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-[#000919] border border-white/10 rounded-3xl shadow-2xl text-white flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold truncate">
-              {detail?.name ||
-                (isFacility ? "Facility Details" : "Equipment Details")}
-            </h2>
-            <p className="text-xs text-gray-400 mt-1">
-              Admin resource details
-            </p>
+    <>
+      <style>{`
+        .resource-details-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .resource-details-scroll::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
+      <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 py-5">
+        <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-[#000919] border border-white/10 rounded-3xl shadow-2xl text-white flex flex-col">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold truncate">
+                {detail?.name ||
+                  (isFacility ? "Facility Details" : "Equipment Details")}
+              </h2>
+              <p className="text-xs text-gray-400 mt-1">
+                Admin resource details
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-gray-400 hover:text-white hover:bg-white/10 p-2 rounded-xl transition"
+            >
+              <X size={18} />
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-white hover:bg-white/10 p-2 rounded-xl transition"
-          >
-            <X size={18} />
-          </button>
-        </div>
+          <div className="resource-details-scroll flex-1 overflow-y-auto p-5 space-y-5">
+            {isLoading ? (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center text-gray-400">
+                Loading resource details...
+              </div>
+            ) : errorMessage ? (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center text-red-300">
+                {errorMessage}
+              </div>
+            ) : !detail ? (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center text-gray-400">
+                Resource details could not be loaded.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-5">
+                  <SectionCard
+                    title="Images"
+                    icon={isFacility ? Building2 : Package}
+                  >
+                    <ImageSlider images={images} title={detail.name} />
+                  </SectionCard>
 
-        <div className="flex-1 overflow-y-auto hide-scrollbar p-5 space-y-5">
-          {isLoading ? (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center text-gray-400">
-              Loading resource details...
-            </div>
-          ) : errorMessage ? (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center text-red-300">
-              {errorMessage}
-            </div>
-          ) : !detail ? (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center text-gray-400">
-              Resource details could not be loaded.
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-5">
-                <SectionCard title="Images" icon={isFacility ? Building2 : Package}>
-                  <ImageSlider images={images} title={detail.name} />
-                </SectionCard>
-
-                <SectionCard title="Overview" icon={isFacility ? Building2 : Package}>
-                  <div className="grid grid-cols-2 gap-3">
-                    <InfoCard
-                      icon={isFacility ? Building2 : Package}
-                      label="Category"
-                      value={detail.resourceCategory}
-                    />
-                    <InfoCard
-                      icon={Filter}
-                      label="Status"
-                      value={formatEnum(detail.status)}
-                    />
-                    <InfoCard
-                      icon={Building2}
-                      label="Code"
-                      value={detail.resourceCode || "N/A"}
-                    />
-                    <InfoCard
-                      icon={MapPin}
-                      label={isFacility ? "Building" : "Location"}
-                      value={detail.location || "N/A"}
-                    />
-                    <InfoCard
-                      icon={Users}
-                      label={isFacility ? "Capacity" : "Quantity"}
-                      value={detail.capacity ?? 0}
-                    />
-                    <InfoCard
-                      icon={Filter}
-                      label="Bookable"
-                      value={detail.isBookable ? "Yes" : "No"}
-                    />
-                    <div className="col-span-2">
+                  <SectionCard
+                    title="Overview"
+                    icon={isFacility ? Building2 : Package}
+                  >
+                    <div className="grid grid-cols-2 gap-3">
                       <InfoCard
                         icon={isFacility ? Building2 : Package}
-                        label="Type"
-                        value={formatEnum(detail.type)}
+                        label="Category"
+                        value={detail.resourceCategory}
                       />
-                    </div>
-                    {isFacility && (
+                      <InfoCard
+                        icon={Filter}
+                        label="Status"
+                        value={formatEnum(detail.status)}
+                      />
+                      <InfoCard
+                        icon={Building2}
+                        label="Code"
+                        value={detail.resourceCode || "N/A"}
+                      />
+                      <InfoCard
+                        icon={MapPin}
+                        label={isFacility ? "Building" : "Location"}
+                        value={detail.location || "N/A"}
+                      />
+                      <InfoCard
+                        icon={Users}
+                        label={isFacility ? "Capacity" : "Quantity"}
+                        value={detail.capacity ?? 0}
+                      />
+                      <InfoCard
+                        icon={Filter}
+                        label="Bookable"
+                        value={detail.isBookable ? "Yes" : "No"}
+                      />
                       <div className="col-span-2">
                         <InfoCard
-                          icon={Filter}
-                          label="Indoor / Outdoor"
-                          value={formatEnum(detail.indoorOutdoor)}
+                          icon={isFacility ? Building2 : Package}
+                          label="Type"
+                          value={formatEnum(detail.type)}
                         />
                       </div>
-                    )}
-                    <div className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-                      <p className="text-xs text-gray-400 mb-1">Description</p>
-                      <p className="text-sm text-white leading-6">
-                        {detail.description || "No description"}
-                      </p>
-                    </div>
-                  </div>
-                </SectionCard>
-              </div>
-
-              {isFacility && (
-                <>
-                  <SectionCard
-                    title="Linked Equipment"
-                    icon={Package}
-                    rightContent={
-                      <button
-                        type="button"
-                        onClick={handleSaveFacilityEquipmentLinks}
-                        disabled={isSavingLinks}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#0A6ED3] hover:bg-[#054E98] disabled:opacity-50 transition"
-                      >
-                        <Save size={14} />
-                        {isSavingLinks ? "Saving..." : "Save"}
-                      </button>
-                    }
-                  >
-                    <LinkedEquipmentCards
-                      items={linkedEquipmentCards}
-                      onRemove={handleRemoveLinkedEquipment}
-                    />
-                  </SectionCard>
-
-                  <SectionCard
-                    title="Add Existing Equipment"
-                    icon={Plus}
-                    rightContent={
-                      <button
-                        type="button"
-                        onClick={handleAddSelectedEquipments}
-                        disabled={selectedEquipmentIds.length === 0}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#0A6ED3]/15 text-[#6CB6FF] border border-[#0A6ED3]/25 hover:bg-[#0A6ED3]/25 disabled:opacity-40 transition"
-                      >
-                        <Plus size={14} />
-                        Add Selected
-                      </button>
-                    }
-                  >
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3">
-                        <div className="relative">
-                          <Search
-                            size={15}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Search equipment by name, code, type, or location"
-                            value={equipmentSearch}
-                            onChange={(e) => setEquipmentSearch(e.target.value)}
-                            className="w-full rounded-xl bg-[#001233] border border-white/10 pl-10 pr-3 py-3 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                      {isFacility && (
+                        <div className="col-span-2">
+                          <InfoCard
+                            icon={Filter}
+                            label="Indoor / Outdoor"
+                            value={formatEnum(detail.indoorOutdoor)}
                           />
                         </div>
-
-                        <select
-                          value={equipmentStatusFilter}
-                          onChange={(e) => setEquipmentStatusFilter(e.target.value)}
-                          className="w-full rounded-xl bg-[#001233] border border-white/10 px-3 py-3 text-sm text-white outline-none focus:border-[#0A6ED3]"
-                        >
-                          {STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="overflow-x-auto border border-white/10 rounded-2xl">
-                        <table className="w-full min-w-[700px] text-sm">
-                          <thead className="bg-white/5 border-b border-white/10">
-                            <tr className="text-left text-xs text-gray-400">
-                              <th className="px-4 py-3">Select</th>
-                              <th className="px-4 py-3">Code</th>
-                              <th className="px-4 py-3">Name</th>
-                              <th className="px-4 py-3">Type</th>
-                              <th className="px-4 py-3">Location</th>
-                              <th className="px-4 py-3">Qty</th>
-                              <th className="px-4 py-3">Status</th>
-                            </tr>
-                          </thead>
-
-                          <tbody>
-                            {filteredAvailableEquipment.length === 0 ? (
-                              <tr>
-                                <td
-                                  colSpan="7"
-                                  className="px-4 py-8 text-center text-gray-400"
-                                >
-                                  No available equipment found
-                                </td>
-                              </tr>
-                            ) : (
-                              filteredAvailableEquipment.map((item) => (
-                                <tr
-                                  key={item.id}
-                                  className="border-b border-white/10 hover:bg-white/5"
-                                >
-                                  <td className="px-4 py-3">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedEquipmentIds.includes(item.id)}
-                                      onChange={() =>
-                                        handleToggleEquipmentSelection(item.id)
-                                      }
-                                      className="h-4 w-4"
-                                    />
-                                  </td>
-                                  <td className="px-4 py-3 text-white/80">
-                                    {item.code || "N/A"}
-                                  </td>
-                                  <td className="px-4 py-3 text-white font-medium">
-                                    {item.name}
-                                  </td>
-                                  <td className="px-4 py-3 text-white/70">
-                                    {formatEnum(item.type)}
-                                  </td>
-                                  <td className="px-4 py-3 text-white/70">
-                                    {item.location || "N/A"}
-                                  </td>
-                                  <td className="px-4 py-3 text-white/70">
-                                    {item.quantity ?? 0}
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <span
-                                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${badgeClass(
-                                        item.status
-                                      )}`}
-                                    >
-                                      {formatEnum(item.status)}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
+                      )}
+                      <div className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                        <p className="text-xs text-gray-400 mb-1">Description</p>
+                        <p className="text-sm text-white leading-6">
+                          {detail.description || "No description"}
+                        </p>
                       </div>
                     </div>
                   </SectionCard>
-                </>
-              )}
-            </>
-          )}
+                </div>
+
+                {isFacility && (
+                  <>
+                    <SectionCard
+                      title="Linked Equipment"
+                      icon={Package}
+                      rightContent={
+                        <button
+                          type="button"
+                          onClick={handleSaveFacilityEquipmentLinks}
+                          disabled={isSavingLinks}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#0A6ED3] hover:bg-[#054E98] disabled:opacity-50 transition"
+                        >
+                          <Save size={14} />
+                          {isSavingLinks ? "Saving..." : "Save"}
+                        </button>
+                      }
+                    >
+                      <LinkedEquipmentSection
+                        items={linkedEquipmentCards}
+                        onRemove={handleDeleteAndSaveLinkedEquipment}
+                        onView={setViewingEquipment}
+                        deletingId={deletingEquipmentId}
+                      />
+                    </SectionCard>
+
+                    <SectionCard
+                      title="Add Existing Equipment"
+                      icon={Plus}
+                      rightContent={
+                        <button
+                          type="button"
+                          onClick={handleAddSelectedEquipments}
+                          disabled={selectedEquipmentIds.length === 0}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#0A6ED3]/15 text-[#6CB6FF] border border-[#0A6ED3]/25 hover:bg-[#0A6ED3]/25 disabled:opacity-40 transition"
+                        >
+                          <Plus size={14} />
+                          Add Selected
+                        </button>
+                      }
+                    >
+                      <div className="space-y-4">
+                        <div className="space-y-3">
+                          <div className="relative">
+                            <Search
+                              size={15}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Search equipment by name, code, type, or location"
+                              value={equipmentSearch}
+                              onChange={(e) => setEquipmentSearch(e.target.value)}
+                              className="w-full rounded-xl bg-[#001233] border border-white/10 pl-10 pr-3 py-3 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <select
+                              value={equipmentStatusFilter}
+                              onChange={(e) =>
+                                setEquipmentStatusFilter(e.target.value)
+                              }
+                              className="w-full rounded-xl bg-[#001233] border border-white/10 px-3 py-3 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                            >
+                              {STATUS_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={equipmentTypeFilter}
+                              onChange={(e) =>
+                                setEquipmentTypeFilter(e.target.value)
+                              }
+                              className="w-full rounded-xl bg-[#001233] border border-white/10 px-3 py-3 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                            >
+                              {equipmentTypeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="overflow-x-auto border border-white/10 rounded-2xl">
+                          <table className="w-full min-w-[700px] text-sm">
+                            <thead className="bg-white/5 border-b border-white/10">
+                              <tr className="text-left text-xs text-gray-400">
+                                <th className="px-4 py-3">Select</th>
+                                <th className="px-4 py-3">Code</th>
+                                <th className="px-4 py-3">Name</th>
+                                <th className="px-4 py-3">Type</th>
+                                <th className="px-4 py-3">Location</th>
+                                <th className="px-4 py-3">Qty</th>
+                                <th className="px-4 py-3">Status</th>
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              {filteredAvailableEquipment.length === 0 ? (
+                                <tr>
+                                  <td
+                                    colSpan="7"
+                                    className="px-4 py-8 text-center text-gray-400"
+                                  >
+                                    No available equipment found
+                                  </td>
+                                </tr>
+                              ) : (
+                                filteredAvailableEquipment.map((item) => (
+                                  <tr
+                                    key={item.id}
+                                    className="border-b border-white/10 hover:bg-white/5"
+                                  >
+                                    <td className="px-4 py-3">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedEquipmentIds.includes(
+                                          item.id
+                                        )}
+                                        onChange={() =>
+                                          handleToggleEquipmentSelection(item.id)
+                                        }
+                                        className="h-4 w-4"
+                                      />
+                                    </td>
+                                    <td className="px-4 py-3 text-white/80">
+                                      {item.code || "N/A"}
+                                    </td>
+                                    <td className="px-4 py-3 text-white font-medium">
+                                      {item.name}
+                                    </td>
+                                    <td className="px-4 py-3 text-white/70">
+                                      {formatEnum(item.type)}
+                                    </td>
+                                    <td className="px-4 py-3 text-white/70">
+                                      {item.location || "N/A"}
+                                    </td>
+                                    <td className="px-4 py-3 text-white/70">
+                                      {item.quantity ?? 0}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span
+                                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${badgeClass(
+                                          item.status
+                                        )}`}
+                                      >
+                                        {formatEnum(item.status)}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </SectionCard>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <EquipmentQuickViewModal
+        item={viewingEquipment}
+        onClose={() => setViewingEquipment(null)}
+      />
+    </>
   );
 }

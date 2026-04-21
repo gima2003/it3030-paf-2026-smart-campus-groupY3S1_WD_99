@@ -100,7 +100,7 @@ const normalizeEquipment = (equipment) => ({
     equipment.active !== undefined && equipment.active !== null
       ? equipment.active
       : true,
-  location: "N/A",
+  location: equipment.currentLocation || "",
   capacity: equipment.quantity ?? 0,
   indoorOutdoor: null,
 });
@@ -126,6 +126,7 @@ const buildEquipmentPayload = (formData) => ({
   quantity: Number(formData.capacity) || 0,
   status: formData.status,
   active: formData.isBookable,
+  currentLocation: formData.location,
   facilityIds: [],
 });
 
