@@ -3,6 +3,7 @@ import { notificationService } from '../services/notificationService';
 import { useToast } from '../context/ToastContext';
 import { FaPlus, FaPaperPlane, FaTimesCircle } from 'react-icons/fa';
 import CreateNotificationModal from '../components/CreateNotificationModal';
+import Swal from 'sweetalert2';
 
 function AdminNotifications() {
     const [notifications, setNotifications] = useState([]);
@@ -23,7 +24,17 @@ function AdminNotifications() {
     };
 
     const handleExpire = async (id) => {
-        if (!window.confirm("Are you sure you want to expire this notification?")) return;
+        const result = await Swal.fire({
+            title: "Are you sure you want to expire this notification?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes"
+        });
+
+        if (!result.isConfirmed) return;
+
         try {
             await notificationService.expireNotification(id);
             showToast("Notification expired", "success");

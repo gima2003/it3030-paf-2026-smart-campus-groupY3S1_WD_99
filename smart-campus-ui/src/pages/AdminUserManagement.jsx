@@ -3,6 +3,7 @@ import { createUser, getAllUsers, getUserStats, updateUserStatus, deleteUser } f
 import { useToast } from "../context/ToastContext";
 import AdminEditUserModal from "../components/AdminEditUserModal";
 import AdminViewUserModal from "../components/AdminViewUserModal";
+import Swal from 'sweetalert2';
 
 function AdminUserManagement() {
   const { showToast } = useToast();
@@ -105,14 +106,25 @@ function AdminUserManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this user?")) return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This user will be permanently removed.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete"
+    });
+
+    if (!result.isConfirmed) return;
+
     setActionLoading(id);
     try {
       await deleteUser(id);
-      showToast("User deleted successfully", "success");
+      Swal.fire("Deleted!", "User has been deleted successfully.", "success");
       await fetchData();
     } catch (err) {
-      showToast("Failed to delete user", "error");
+      Swal.fire("Error!", "Failed to delete user. Please try again.", "error");
     } finally {
       setActionLoading(null);
     }
