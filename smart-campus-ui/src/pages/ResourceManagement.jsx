@@ -652,6 +652,7 @@ function ResourceManagement() {
         isOpen={isDetailsOpen}
         onClose={handleCloseDetails}
         resource={selectedResource}
+        onResourceUpdated={fetchResources}
       />
     </div>
   );

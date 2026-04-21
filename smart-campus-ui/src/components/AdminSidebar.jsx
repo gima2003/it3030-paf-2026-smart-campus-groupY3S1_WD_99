@@ -21,6 +21,11 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
       icon: LayoutDashboard,
     },
     {
+      path: "/admin/users",
+      label: "User Management",
+      icon: Users,
+    },
+    {
       path: "/admin/resources",
       label: "Facilities & Assets",
       icon: Building2,
