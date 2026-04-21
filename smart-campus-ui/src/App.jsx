@@ -8,6 +8,7 @@ import CTASection from "./components/CTASection";
 import Footer from "./components/Footer";
 
 import Login from "./pages/Login";
+import Features from "./pages/Features";
 
 import AdminLayout from "./pages/AdminLayout";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -60,6 +61,7 @@ function App() {
           {/* PUBLIC */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/features" element={<Features />} />
 
           {/* ADMIN - TEMPORARILY WITHOUT ProtectedRoute */}
           <Route path="/admin" element={<AdminLayout />}>

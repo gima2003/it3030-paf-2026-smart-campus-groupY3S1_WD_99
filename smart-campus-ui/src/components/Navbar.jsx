@@ -22,10 +22,35 @@ function Navbar() {
 
       {/* Middle - Links */}
       <div className="hidden md:flex gap-8 text-gray-300 font-medium">
-        <a href="#" className="hover:text-white transition">Home</a>
-        <a href="#" className="hover:text-white transition">Features</a>
-        <a href="#" className="hover:text-white transition">About</a>
-        <a href="#" className="hover:text-white transition">Contact</a>
+
+        <button
+          onClick={() => navigate("/")}
+          className="hover:text-white transition"
+        >
+          Home
+        </button>
+
+        <button
+          onClick={() => navigate("/features")}
+          className="hover:text-white transition"
+        >
+          Features
+        </button>
+
+        <button
+          onClick={() => navigate("/about")}
+          className="hover:text-white transition"
+        >
+          About
+        </button>
+
+        <button
+          onClick={() => navigate("/contact")}
+          className="hover:text-white transition"
+        >
+          Contact
+        </button>
+
       </div>
 
       {/* Right - Auth */}
