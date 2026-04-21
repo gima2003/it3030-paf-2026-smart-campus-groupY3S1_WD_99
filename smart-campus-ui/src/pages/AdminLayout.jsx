@@ -10,9 +10,9 @@ function AdminLayout() {
       <div style={styles.main}>
         <AdminNavbar />
 
-        <div style={styles.content}>
-          <Outlet /> {/* 🔥 THIS IS KEY */}
-        </div>
+        <main style={styles.content}>
+          <Outlet />
+        </main>
       </div>
     </div>
   );
@@ -22,18 +22,24 @@ const styles = {
   container: {
     display: "flex",
     height: "100vh",
-    fontFamily: "Arial, sans-serif"
+    backgroundColor: "#000919",
+    color: "white",
+    fontFamily: "Arial, sans-serif",
+    overflow: "hidden",
   },
   main: {
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    backgroundColor: "#f4f6f9"
+    backgroundColor: "#000919",
+    minWidth: 0,
   },
   content: {
-    padding: "20px",
-    overflowY: "auto"
-  }
+    flex: 1,
+    overflowY: "auto",
+    backgroundColor: "#000919",
+    padding: "24px",
+  },
 };
 
 export default AdminLayout;

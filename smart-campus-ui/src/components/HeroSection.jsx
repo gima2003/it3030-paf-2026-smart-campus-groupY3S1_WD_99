@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import dashboardPreview from "../assets/prev1.jpeg";
 
 function HeroSection() {
   const navigate = useNavigate();
@@ -119,6 +120,18 @@ function HeroSection() {
           </div>
 
         </div>
+      {/* Right Preview */}
+<div className="hidden md:block">
+  <div className="bg-white/5 border border-white/10 h-80 rounded-2xl overflow-hidden shadow-lg">
+    
+    <img
+      src={dashboardPreview}
+      alt="Dashboard Preview"
+      className="w-full h-full object-cover"
+    />
+
+  </div>
+</div>
 
       </div>
     </section>

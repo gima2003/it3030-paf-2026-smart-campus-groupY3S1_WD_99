@@ -3,12 +3,9 @@ import { AuthContext } from "../context/AuthContext";
 import { FaUserCircle } from "react-icons/fa";
 import NotificationBell from "./NotificationBell";
 import ProfileModal from "./ProfileModal";
-import axios from "axios";
-import { useToast } from "../context/ToastContext";
 
 function LecturerNavbar() {
-  const { user, setUser, logout, fetchUser, token } = useContext(AuthContext);
-  const { showToast } = useToast();
+const { user, setUser, logout } = useContext(AuthContext);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);

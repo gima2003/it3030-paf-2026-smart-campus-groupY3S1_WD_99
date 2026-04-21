@@ -5,9 +5,13 @@ import LecturerNavbar from "../components/LecturerNavbar";
 function LecturerLayout() {
   return (
     <div className="flex h-screen">
+      {/* Sidebar */}
       <LecturerSidebar />
+
+      {/* Main */}
       <div className="flex-1 flex flex-col bg-[#000919]">
         <LecturerNavbar />
+
         <div className="p-6 overflow-y-auto">
           <Outlet />
         </div>

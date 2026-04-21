@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { FaBell, FaUserCircle } from "react-icons/fa";
 import NotificationBell from "./NotificationBell";
+import { FaBell, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import ProfileModal from "./ProfileModal";
 import axios from "axios";
 import { useToast } from "../context/ToastContext";
@@ -9,6 +9,7 @@ import { useToast } from "../context/ToastContext";
 function AdminNavbar() {
   const { user, setUser, logout, fetchUser, token } = useContext(AuthContext);
   const { showToast } = useToast();
+ 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -45,15 +46,42 @@ function AdminNavbar() {
 
   return (
     <>
-      <div className="h-16 bg-[#000919] border-b border-white/10 px-6 flex justify-between items-center relative z-40">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#000919]/90 backdrop-blur-md">
+        <div className="h-20 px-6 lg:px-8 flex items-center justify-between">
+          
+          {/* Left Side */}
+          <div className="flex flex-col">
+            <h2 className="text-white text-xl font-semibold tracking-tight">
+              Admin Dashboard
+            </h2>
+            <span className="text-sm text-gray-400">
+              Manage campus operations, bookings, tickets, and users
+            </span>
+          </div>
 
-        {/* Title */}
-        <h3 className="text-lg font-semibold text-white">
-          Admin Dashboard
-        </h3>
+          {/* Right Side */}
+          <div className="flex items-center gap-3 lg:gap-4">
+            
+            {/* Notification Button */}
+            <button
+              className="relative w-11 h-11 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 transition flex items-center justify-center"
+              title="Notifications"
+            >
+              <FaBell className="text-lg" />
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0A6ED3] text-[10px] font-bold text-white flex items-center justify-center">
+                3
+              </span>
+            </button>
 
-        {/* Right Side */}
-        <div className="flex items-center gap-6">
+            {/* User Card */}
+            {user && (
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10 transition"
+              >
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0A6ED3] to-[#054E98] flex items-center justify-center text-white shadow-md">
+                  <FaUserCircle className="text-xl" />
+                </div>
 
           {/* User Info */}
           {user && (
@@ -137,11 +165,29 @@ function AdminNavbar() {
               </div>
             )}
           </div>
+                <div className="hidden md:flex flex-col items-start leading-tight">
+                  <span className="text-sm font-semibold text-white">
+                    {user.firstName} {user.lastName}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    Administrator
+                  </span>
+                </div>
+              </button>
+            )}
 
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0A6ED3] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#085cb0] transition shadow-md shadow-blue-900/20"
+            >
+              <FaSignOutAlt />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Profile Modal */}
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
