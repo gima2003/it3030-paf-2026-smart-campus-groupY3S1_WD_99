@@ -8,5 +8,8 @@ import java.util.List;
 
 @Repository
 public interface FacilityImageRepository extends JpaRepository<FacilityImage, Long> {
+
     List<FacilityImage> findByFacilityId(Long facilityId);
+
+    List<FacilityImage> findByFacilityIdOrderByIsPrimaryDescUploadedAtDesc(Long facilityId);
 }

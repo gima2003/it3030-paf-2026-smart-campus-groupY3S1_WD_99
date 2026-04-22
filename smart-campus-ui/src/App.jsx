@@ -37,8 +37,6 @@ import TechnicianNotifications from "./pages/TechnicianNotifications";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 
-
-
 /* LANDING PAGE */
 function LandingPage() {
   return (
@@ -70,7 +68,10 @@ function App() {
             <Route path="technicians" element={<AdminTechnicians />} />
             <Route path="users" element={<AdminUserManagement />} />
             <Route path="resources" element={<ResourceManagement />} />
-            <Route path="booking-management" element={<AdminBookingManagement />} />
+            <Route
+              path="booking-management"
+              element={<AdminBookingManagement />}
+            />
           </Route>
 
           {/* STUDENT - TEMPORARILY WITHOUT ProtectedRoute */}
@@ -79,7 +80,10 @@ function App() {
             <Route path="tickets" element={<StudentTickets />} />
             <Route path="bookings" element={<StudentBookings />} />
             <Route path="bookings/new" element={<StudentBookingForm />} />
-            <Route path="/student/bookings/calendar" element={<StudentBookingCalendar />} />
+            <Route
+              path="bookings/calendar"
+              element={<StudentBookingCalendar />}
+            />
             <Route path="resources" element={<StudentResources />} />
             <Route path="report" element={<StudentReport />} />
             <Route path="notifications" element={<StudentNotifications />} />
@@ -92,8 +96,6 @@ function App() {
             <Route path="history" element={<TechnicianHistory />} />
             <Route path="notifications" element={<TechnicianNotifications />} />
           </Route>
-
-        
         </Routes>
       </AuthProvider>
     </ToastProvider>

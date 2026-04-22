@@ -8,5 +8,8 @@ import java.util.List;
 
 @Repository
 public interface EquipmentImageRepository extends JpaRepository<EquipmentImage, Long> {
+
     List<EquipmentImage> findByEquipmentId(Long equipmentId);
+
+    List<EquipmentImage> findByEquipmentIdOrderByIsPrimaryDescUploadedAtDesc(Long equipmentId);
 }
