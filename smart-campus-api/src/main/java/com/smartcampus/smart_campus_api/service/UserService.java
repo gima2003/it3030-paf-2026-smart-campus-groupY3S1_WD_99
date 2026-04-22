@@ -3,8 +3,10 @@ package com.smartcampus.smart_campus_api.service;
 import com.smartcampus.smart_campus_api.dto.CreateUserRequest;
 import com.smartcampus.smart_campus_api.dto.UpdateProfileRequest;
 import com.smartcampus.smart_campus_api.dto.UpdateUserAdminRequest;
+import com.smartcampus.smart_campus_api.entity.Technician;
 import com.smartcampus.smart_campus_api.entity.User;
 import com.smartcampus.smart_campus_api.enums.Role;
+import com.smartcampus.smart_campus_api.repository.TechnicianRepository;
 import com.smartcampus.smart_campus_api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TechnicianRepository technicianRepository;
 
     @Autowired
     private EmailService emailService;
@@ -71,18 +76,45 @@ public class UserService {
                 user.setSpecialization(request.getSpecialization());
                 break;
             case ADMIN:
-                // No role-specific fields for ADMIN
                 break;
         }
 
         User savedUser = userRepository.save(user);
 
+        // ---- NEW LOGIC: sync technician table ----
+        if (roleEnum == Role.TECHNICIAN) {
+            createTechnicianRecord(savedUser);
+        }
+
         // Send email if user is active
         if (Boolean.TRUE.equals(savedUser.getIsActive())) {
-            emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName(), savedUser.getRole());
+            emailService.sendWelcomeEmail(
+                    savedUser.getEmail(),
+                    savedUser.getFirstName(),
+                    savedUser.getRole()
+            );
         }
 
         return savedUser;
+    }
+
+    private void createTechnicianRecord(User savedUser) {
+        if (technicianRepository.existsByEmail(savedUser.getEmail())) {
+            return;
+        }
+
+        Technician technician = new Technician();
+        technician.setFullName(savedUser.getFirstName() + " " + savedUser.getLastName());
+        technician.setEmail(savedUser.getEmail());
+        technician.setPhone(savedUser.getPhone());
+        technician.setSpecialization(
+                savedUser.getSpecialization() != null && !savedUser.getSpecialization().isBlank()
+                        ? savedUser.getSpecialization()
+                        : "GENERAL"
+        );
+        technician.setStatus(Boolean.TRUE.equals(savedUser.getIsActive()) ? "ACTIVE" : "INACTIVE");
+
+        technicianRepository.save(technician);
     }
 
     public List<User> getAllUsers() {
@@ -107,12 +139,30 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
         user.setIsActive(isActive);
-        return userRepository.save(user);
+
+        User updatedUser = userRepository.save(user);
+
+        // optional sync
+        if ("TECHNICIAN".equalsIgnoreCase(updatedUser.getRole())) {
+            technicianRepository.findByEmail(updatedUser.getEmail()).ifPresent(technician -> {
+                technician.setStatus(isActive ? "ACTIVE" : "INACTIVE");
+                technicianRepository.save(technician);
+            });
+        }
+
+        return updatedUser;
     }
 
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+
+        // optional sync
+        if ("TECHNICIAN".equalsIgnoreCase(user.getRole())) {
+            technicianRepository.findByEmail(user.getEmail())
+                    .ifPresent(technicianRepository::delete);
+        }
+
         userRepository.delete(user);
     }
 
@@ -144,7 +194,23 @@ public class UserService {
                 break;
         }
 
-        return userRepository.save(user);
+        User updatedUser = userRepository.save(user);
+
+        // optional sync
+        if ("TECHNICIAN".equalsIgnoreCase(updatedUser.getRole())) {
+            technicianRepository.findByEmail(updatedUser.getEmail()).ifPresent(technician -> {
+                technician.setFullName(updatedUser.getFirstName() + " " + updatedUser.getLastName());
+                technician.setPhone(updatedUser.getPhone());
+                technician.setSpecialization(
+                        updatedUser.getSpecialization() != null && !updatedUser.getSpecialization().isBlank()
+                                ? updatedUser.getSpecialization()
+                                : "GENERAL"
+                );
+                technicianRepository.save(technician);
+            });
+        }
+
+        return updatedUser;
     }
 
     public User updateUserByAdmin(Long id, UpdateUserAdminRequest request) {
@@ -181,7 +247,24 @@ public class UserService {
                 break;
         }
 
-        return userRepository.save(user);
+        User updatedUser = userRepository.save(user);
+
+        // optional sync
+        if ("TECHNICIAN".equalsIgnoreCase(updatedUser.getRole())) {
+            technicianRepository.findByEmail(updatedUser.getEmail()).ifPresent(technician -> {
+                technician.setFullName(updatedUser.getFirstName() + " " + updatedUser.getLastName());
+                technician.setPhone(updatedUser.getPhone());
+                technician.setSpecialization(
+                        updatedUser.getSpecialization() != null && !updatedUser.getSpecialization().isBlank()
+                                ? updatedUser.getSpecialization()
+                                : "GENERAL"
+                );
+                technician.setStatus(Boolean.TRUE.equals(updatedUser.getIsActive()) ? "ACTIVE" : "INACTIVE");
+                technicianRepository.save(technician);
+            });
+        }
+
+        return updatedUser;
     }
 
     private void validateRoleFields(CreateUserRequest request) {
@@ -230,7 +313,6 @@ public class UserService {
                     throw new IllegalArgumentException("Specialization is required for TECHNICIAN");
                 break;
             case ADMIN:
-                // No role-specific validation for ADMIN
                 break;
         }
     }
