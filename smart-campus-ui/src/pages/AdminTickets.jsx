@@ -8,7 +8,10 @@ import {
   FaClock,
 } from "react-icons/fa";
 
+import { useToast } from "../context/ToastContext";
+
 function AdminTickets() {
+  const { showToast } = useToast();
   const API = "http://localhost:8081";
 
   const [tickets, setTickets] = useState([]);
@@ -141,10 +144,10 @@ function AdminTickets() {
         setNewStatus(updated.status || "OPEN");
       }
 
-      alert("Ticket updated successfully!");
+      showToast("Ticket updated successfully!", "success");
     } catch (err) {
       console.error("Error updating ticket:", err);
-      alert("Failed to update ticket");
+      showToast("Failed to update ticket", "error");
     }
   };
 
@@ -164,9 +167,10 @@ function AdminTickets() {
       await axios.post(`${API}/api/ticket-comments`, payload);
       setCommentText("");
       await fetchComments(selectedTicket.id);
+      showToast("Comment added successfully!", "success");
     } catch (err) {
       console.error("Error adding comment:", err);
-      alert("Failed to add comment");
+      showToast("Failed to add comment", "error");
     } finally {
       setCommentLoading(false);
     }

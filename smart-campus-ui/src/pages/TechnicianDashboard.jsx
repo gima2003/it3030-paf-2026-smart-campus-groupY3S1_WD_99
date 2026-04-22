@@ -11,8 +11,10 @@ import {
 } from "react-icons/fa";
 
 import { AuthContext } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 function TechnicianDashboard() {
+  const { showToast } = useToast();
   const API = "http://localhost:8081";
 
   const { user } = useContext(AuthContext);
@@ -113,10 +115,10 @@ function TechnicianDashboard() {
       });
 
       await fetchAssignedTickets();
-      alert("Ticket status updated successfully!");
+      showToast("Ticket status updated successfully!", "success");
     } catch (err) {
       console.error("Error updating ticket status:", err);
-      alert("Failed to update ticket status");
+      showToast("Failed to update ticket status", "error");
     }
   };
 
@@ -136,9 +138,10 @@ function TechnicianDashboard() {
       await axios.post(`${API}/api/ticket-comments`, payload);
       setCommentText("");
       await fetchComments(selectedTicket.id);
+      showToast("Comment added successfully!", "success");
     } catch (err) {
       console.error("Error adding comment:", err);
-      alert("Failed to add comment");
+      showToast("Failed to add comment", "error");
     } finally {
       setCommentLoading(false);
     }
