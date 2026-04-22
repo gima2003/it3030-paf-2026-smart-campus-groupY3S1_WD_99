@@ -43,6 +43,7 @@ function CreateNotificationModal({ isOpen, onClose, onSuccess }) {
         try {
             await notificationService.createNotification(payload);
             showToast("Notification created successfully", "success");
+            window.dispatchEvent(new Event("notificationsUpdated"));
             onSuccess();
             onClose();
         } catch (error) {

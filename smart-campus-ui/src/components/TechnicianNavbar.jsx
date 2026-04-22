@@ -63,121 +63,87 @@ function TechnicianNavbar() {
           {/* Right Side */}
           <div className="flex items-center gap-3 lg:gap-4">
 
-            {/* Notification */}
-            <button
-              className="relative w-11 h-11 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 transition flex items-center justify-center"
-              title="Notifications"
-            >
-              <FaBell className="text-lg" />
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0A6ED3] text-[10px] font-bold text-white flex items-center justify-center">
-                2
-              </span>
-            </button>
-
-          {/* Notification */}
-          <NotificationBell rolePrefix="technician" />
-
-          {/* Profile Dropdown Container */}
-          <div className="relative" ref={dropdownRef}>
-            <button 
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition focus:outline-none"
-            >
-              <FaUserCircle className="text-2xl transform transition hover:scale-110" />
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-4 w-64 bg-[#0B1220] rounded-xl shadow-2xl border border-white/10 py-2 z-50 transform origin-top-right transition-all animate-in fade-in zoom-in-95 duration-200">
-                
-                {/* User Info Header */}
-                <div className="px-5 py-3 border-b border-white/10">
-                  <div className="text-sm font-semibold text-white">{user?.firstName} {user?.lastName}</div>
-                  <div className="text-xs text-gray-400 mt-0.5 truncate">{user?.email}</div>
-                </div>
-
-                <div className="py-1">
-                  <button 
-                    onClick={() => { setIsProfileOpen(true); setIsDropdownOpen(false); }}
-                    className="w-full text-left px-5 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-3 transition"
-                  >
-                    <span className="text-lg">👤</span> My Profile
-                  </button>
-
-                  <div className="px-5 py-2 mt-1">
-                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Security Settings</div>
-                    
-                    {/* MFA Logic: Ensure TECHNICIAN is included */}
-                    {(user?.role === "ADMIN" || user?.role === "STUDENT" || user?.role === "TECHNICIAN") && (
-                      !user?.mfaEnabled ? (
-                        <a 
-                          href="/mfa-setup" 
-                          className="w-full text-left py-2 px-3 -mx-3 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-2 transition"
-                        >
-                          🛡️ Enable 2FA
-                        </a>
-                      ) : (
-                        <div className="flex flex-col gap-1 -mx-3">
-                          <div className="w-full text-left py-2 px-3 rounded-lg text-sm text-green-400 flex items-center gap-2 font-medium bg-green-400/10 border border-green-400/20">
-                            ✅ 2FA Enabled
-                          </div>
-                          <button 
-                            onClick={handleDisableMfa}
-                            className="w-full text-left py-2 px-3 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 flex items-center gap-2 transition"
-                          >
-                            ⚠️ Disable 2FA
-                          </button>
-                        </div>
-                      )
-                    )}
-
-                    {/* Hide setting for Manager/Lecturer */}
-                    {user?.role !== "ADMIN" && user?.role !== "STUDENT" && user?.role !== "TECHNICIAN" && (
-                       <span className="text-xs text-gray-500 italic block py-1">Managed by Administrator</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="border-t border-white/10 my-1"></div>
-                
-                <button 
-                  onClick={handleLogout}
-                  className="w-full text-left px-5 py-2.5 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 flex items-center gap-3 transition font-medium"
-                >
-                  <span className="text-lg">🚪</span> Logout
-                </button>
+            {user && (
+              <div className="hidden md:flex flex-col items-end">
+                <span className="text-sm font-medium text-white">{user.firstName} {user.lastName}</span>
+                <span className="text-xs text-gray-400">ID: {user.employeeId}</span>
               </div>
             )}
-          </div>
-            {/* Profile */}
-            {user && (
-              <button
-                onClick={() => setIsProfileOpen(true)}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10 transition"
+
+            {/* Notification */}
+            <NotificationBell rolePrefix="technician" />
+
+            {/* Profile Dropdown Container */}
+            <div className="relative" ref={dropdownRef}>
+              <button 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-2 text-gray-400 hover:text-white transition focus:outline-none"
               >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0A6ED3] to-[#054E98] flex items-center justify-center text-white shadow-md">
-                  <FaUserCircle className="text-xl" />
-                </div>
-
-                <div className="hidden md:flex flex-col items-start leading-tight">
-                  <span className="text-sm font-semibold text-white">
-                    {user.firstName} {user.lastName}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    ID: {user.employeeId}
-                  </span>
-                </div>
+                <FaUserCircle className="text-2xl transform transition hover:scale-110" />
               </button>
-            )}
 
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0A6ED3] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#085cb0] transition shadow-md shadow-blue-900/20"
-            >
-              <FaSignOutAlt />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-4 w-64 bg-[#0B1220] rounded-xl shadow-2xl border border-white/10 py-2 z-50 transform origin-top-right transition-all animate-in fade-in zoom-in-95 duration-200">
+                  
+                  {/* User Info Header */}
+                  <div className="px-5 py-3 border-b border-white/10">
+                    <div className="text-sm font-semibold text-white">{user?.firstName} {user?.lastName}</div>
+                    <div className="text-xs text-gray-400 mt-0.5 truncate">{user?.email}</div>
+                  </div>
 
+                  <div className="py-1">
+                    <button 
+                      onClick={() => { setIsProfileOpen(true); setIsDropdownOpen(false); }}
+                      className="w-full text-left px-5 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-3 transition"
+                    >
+                      <span className="text-lg">👤</span> My Profile
+                    </button>
+
+                    <div className="px-5 py-2 mt-1">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Security Settings</div>
+                      
+                      {/* MFA Logic: Ensure TECHNICIAN is included */}
+                      {(user?.role === "ADMIN" || user?.role === "STUDENT" || user?.role === "TECHNICIAN") && (
+                        !user?.mfaEnabled ? (
+                          <a 
+                            href="/mfa-setup" 
+                            className="w-full text-left py-2 px-3 -mx-3 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-2 transition"
+                          >
+                            🛡️ Enable 2FA
+                          </a>
+                        ) : (
+                          <div className="flex flex-col gap-1 -mx-3">
+                            <div className="w-full text-left py-2 px-3 rounded-lg text-sm text-green-400 flex items-center gap-2 font-medium bg-green-400/10 border border-green-400/20">
+                              ✅ 2FA Enabled
+                            </div>
+                            <button 
+                              onClick={handleDisableMfa}
+                              className="w-full text-left py-2 px-3 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 flex items-center gap-2 transition"
+                            >
+                              ⚠️ Disable 2FA
+                            </button>
+                          </div>
+                        )
+                      )}
+
+                      {/* Hide setting for Manager/Lecturer */}
+                      {user?.role !== "ADMIN" && user?.role !== "STUDENT" && user?.role !== "TECHNICIAN" && (
+                         <span className="text-xs text-gray-500 italic block py-1">Managed by Administrator</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-white/10 my-1"></div>
+                  
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left px-5 py-2.5 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 flex items-center gap-3 transition font-medium"
+                  >
+                    <span className="text-lg">🚪</span> Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

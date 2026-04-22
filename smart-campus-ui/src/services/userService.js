@@ -62,7 +62,10 @@ export const deleteUser = async (id) => {
 
 export const updateProfile = async (profileData) => {
   try {
-    const response = await axios.put('http://localhost:8081/api/users/profile', profileData);
+    const token = localStorage.getItem('token');
+    const response = await axios.put('http://localhost:8081/api/users/profile', profileData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   } catch (error) {
     if (error.response && error.response.data) throw new Error(error.response.data);

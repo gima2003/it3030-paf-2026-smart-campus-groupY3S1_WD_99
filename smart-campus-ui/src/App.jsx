@@ -27,7 +27,7 @@ import TechnicianDashboard from "./pages/TechnicianDashboard";
 import TechnicianLayout from "./pages/TechnicianLayout";
 import TechnicianTickets from "./pages/TechnicianTickets";
 import TechnicianHistory from "./pages/TechnicianHistory";
-
+import TechnicianNotifications from "./pages/TechnicianNotifications";
 import LecturerLayout from "./pages/LecturerLayout";
 import LecturerDashboard from "./pages/LecturerDashboard";
 
@@ -83,6 +83,8 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="tickets" element={<AdminTickets />} />
             <Route path="technicians" element={<AdminTechnicians />} />
+            <Route path="users" element={<AdminUserManagement />} />
+            <Route path="notifications" element={<AdminNotifications />} />
           </Route>
 
            {/* LECTURER */}
@@ -95,36 +97,8 @@ function App() {
             }
           >
             <Route index element={<LecturerDashboard />} />
-           
-          </Route>
-
-          {/* STUDENT */}
-          <Route
-            path="/student"
-            element={
-              <ProtectedRoute allowedRole="STUDENT">
-                <StudentLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<StudentDashboard />} />
             <Route path="tickets" element={<StudentTickets />} />
-          </Route>
-
-          {/* 🔥 FALLBACK (IMPORTANT) */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRole="ADMIN">
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<AdminDashboard />} />
-            <Route path="tickets" element={<AdminTickets />} />
-            <Route path="technicians" element={<AdminTechnicians />} />
-            <Route path="users" element={<AdminUserManagement />} />
-            <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="notifications" element={<NotificationsPage />} />
           </Route>
 
           {/* STUDENT */}
@@ -156,7 +130,7 @@ function App() {
             <Route index element={<TechnicianDashboard />} />
             <Route path="tickets" element={<TechnicianTickets />} />
             <Route path="history" element={<TechnicianHistory />} />
-            <Route path="notifications" element={<TechnicianNotifications />} />
+            <Route path="notifications" element={<NotificationsPage />} />
           </Route>
         </Routes>
       </AuthProvider>

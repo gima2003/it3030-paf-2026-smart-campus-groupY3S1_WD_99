@@ -24,9 +24,13 @@ function NotificationBell({ rolePrefix = "admin" }) {
     // Only poll when the user component is mounted contextually.
     const intervalId = setInterval(fetchNotifications, 60000); // 1-minute polling
 
+    const handleUpdateEvent = () => fetchNotifications();
+    window.addEventListener("notificationsUpdated", handleUpdateEvent);
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
        document.removeEventListener("mousedown", handleClickOutside);
+       window.removeEventListener("notificationsUpdated", handleUpdateEvent);
        clearInterval(intervalId);
     };
   }, []);

@@ -79,8 +79,14 @@ function CreateTicketForm() {
   const validate = () => {
     const newErrors = {};
 
-    if (!itPattern.test(form.itNumber)) {
-      newErrors.itNumber = "Format: IT12345678";
+    if (user?.role === 'LECTURER' || user?.role === 'MANAGER') {
+      if (!form.itNumber || form.itNumber.trim() === "") {
+        newErrors.itNumber = "Required";
+      }
+    } else {
+      if (!itPattern.test(form.itNumber)) {
+        newErrors.itNumber = "Format: IT12345678";
+      }
     }
 
     if (!form.email || form.email.trim() === "") {
@@ -137,7 +143,7 @@ function CreateTicketForm() {
         createdByEmail:
           user?.email || localStorage.getItem("email") || form.email,
         createdById: form.itNumber,
-        createdByRole: "STUDENT",
+        createdByRole: user?.role || "STUDENT",
       };
 
       const ticketRes = await axios.post(`${API}/api/tickets`, payload);
@@ -272,12 +278,14 @@ function CreateTicketForm() {
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         <div>
-          <label className="text-gray-300">IT Number *</label>
+          <label className="text-gray-300">
+            {user?.role === 'LECTURER' || user?.role === 'MANAGER' ? 'Employee ID *' : 'IT Number *'}
+          </label>
           <input
             name="itNumber"
             value={form.itNumber}
             onChange={handleChange}
-            placeholder="IT12345678"
+            placeholder={user?.role === 'LECTURER' || user?.role === 'MANAGER' ? 'EMP12345' : 'IT12345678'}
             className="w-full p-3 mt-1 bg-transparent border border-white/10 rounded-lg"
           />
           {errors.itNumber && (
@@ -580,7 +588,7 @@ function MyTickets() {
         ticketId: selectedTicket.id,
         message: commentText,
         createdByEmail: email,
-        createdByRole: "STUDENT",
+        createdByRole: user?.role || "STUDENT",
       };
 
       await axios.post(`${API}/api/ticket-comments`, payload);

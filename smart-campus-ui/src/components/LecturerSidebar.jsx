@@ -23,8 +23,6 @@ function LecturerSidebar() {
         <Link className={linkClass("/lecturer")} to="/lecturer">
           Dashboard
         </Link>
-        <Link className={linkClass("/lecturer/notifications")} to="/lecturer/notifications">
-
         <Link className={linkClass("/lecturer/tickets")} to="/lecturer/tickets">
           My Tickets
         </Link>

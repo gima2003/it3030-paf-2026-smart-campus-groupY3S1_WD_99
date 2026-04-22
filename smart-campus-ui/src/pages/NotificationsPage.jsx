@@ -13,6 +13,11 @@ function NotificationsPage() {
 
     useEffect(() => {
         fetchNotifications();
+
+        const handleUpdateEvent = () => fetchNotifications();
+        window.addEventListener("notificationsUpdated", handleUpdateEvent);
+
+        return () => window.removeEventListener("notificationsUpdated", handleUpdateEvent);
     }, []);
 
     const fetchNotifications = async () => {
