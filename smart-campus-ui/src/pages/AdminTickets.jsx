@@ -112,13 +112,25 @@ function AdminTickets() {
   const updateTicket = async () => {
     if (!selectedTicket) return;
 
+    // --- FRONTEND VALIDATION ---
+    if ((newStatus === "IN_PROGRESS" || newStatus === "RESOLVED") && (!technician || technician.trim() === "")) {
+      showToast(`A technician must be assigned to set status to ${newStatus.replace("_", " ")}`, "error");
+      return;
+    }
+
+    let finalTechnician = technician;
+    if (newStatus === "REJECTED") {
+      finalTechnician = ""; // Rejected tickets should not have an active assignment
+    }
+    // ---------------------------
+
     try {
-      if (technician && technician.trim() !== "") {
+      if (finalTechnician && finalTechnician.trim() !== "") {
         await axios.put(
           `${API}/api/tickets/${selectedTicket.id}/assign`,
           null,
           {
-            params: { technicianEmail: technician },
+            params: { technicianEmail: finalTechnician },
           }
         );
       }
@@ -469,7 +481,8 @@ function AdminTickets() {
                 <select
                   value={technician}
                   onChange={(e) => setTechnician(e.target.value)}
-                  className="w-full p-3 bg-[#000919] border border-white/10 rounded text-white"
+                  disabled={newStatus === "CLOSED" || newStatus === "REJECTED"}
+                  className="w-full p-3 bg-[#000919] border border-white/10 rounded text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Technician</option>
                   {technicians
@@ -486,7 +499,13 @@ function AdminTickets() {
                 <label className="block mb-2 text-white">Update Status</label>
                 <select
                   value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
+                  onChange={(e) => {
+                    const status = e.target.value;
+                    setNewStatus(status);
+                    if (status === "REJECTED") {
+                      setTechnician("");
+                    }
+                  }}
                   className="w-full p-3 bg-[#000919] border border-white/10 rounded text-white"
                 >
                   <option value="OPEN">OPEN</option>
