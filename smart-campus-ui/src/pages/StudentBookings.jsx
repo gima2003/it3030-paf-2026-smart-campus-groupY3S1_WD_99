@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 import {
   cancelBooking,
   deleteBooking,
   getUserBookings,
 } from "../services/bookingService";
-
-import { Link } from "react-router-dom";
 
 function StudentBookings() {
   const [bookings, setBookings] = useState([]);
@@ -13,6 +13,7 @@ function StudentBookings() {
   const [message, setMessage] = useState("");
 
   const userId = localStorage.getItem("userId") || "1";
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchBookings();
@@ -32,9 +33,33 @@ function StudentBookings() {
   };
 
   const handleCancel = async (bookingId) => {
+    const result = await Swal.fire({
+      title: "Cancel booking?",
+      text: "This will cancel your approved booking.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#3b82f6",
+      confirmButtonText: "Yes, cancel it!",
+      background: "#081225",
+      color: "#ffffff",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       await cancelBooking(bookingId, "Cancelled by user");
-      setMessage("Booking cancelled successfully.");
+
+      await Swal.fire({
+        icon: "success",
+        title: "Cancelled!",
+        text: "Booking cancelled successfully.",
+        timer: 1500,
+        showConfirmButton: false,
+        background: "#081225",
+        color: "#ffffff",
+      });
+
       fetchBookings();
     } catch (error) {
       console.error("Cancel failed:", error);
@@ -42,23 +67,49 @@ function StudentBookings() {
       const backendMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
-        (typeof error?.response?.data === "string" ? error.response.data : null) ||
+        (typeof error?.response?.data === "string"
+          ? error.response.data
+          : null) ||
         "Failed to cancel booking.";
 
-      setMessage(backendMessage);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: backendMessage,
+        background: "#081225",
+        color: "#ffffff",
+      });
     }
   };
 
   const handleDelete = async (bookingId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this booking?"
-    );
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This booking will be permanently deleted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#3b82f6",
+      confirmButtonText: "Yes, delete it!",
+      background: "#081225",
+      color: "#ffffff",
+    });
 
-    if (!confirmDelete) return;
+    if (!result.isConfirmed) return;
 
     try {
       await deleteBooking(bookingId);
-      setMessage("Booking deleted successfully.");
+
+      await Swal.fire({
+        icon: "success",
+        title: "Deleted!",
+        text: "Booking deleted successfully.",
+        timer: 1500,
+        showConfirmButton: false,
+        background: "#081225",
+        color: "#ffffff",
+      });
+
       fetchBookings();
     } catch (error) {
       console.error("Delete failed:", error);
@@ -66,11 +117,49 @@ function StudentBookings() {
       const backendMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
-        (typeof error?.response?.data === "string" ? error.response.data : null) ||
+        (typeof error?.response?.data === "string"
+          ? error.response.data
+          : null) ||
         "Failed to delete booking.";
 
-      setMessage(backendMessage);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: backendMessage,
+        background: "#081225",
+        color: "#ffffff",
+      });
     }
+  };
+
+  const handleBookAgain = async (booking) => {
+    const result = await Swal.fire({
+      title: "Book again?",
+      text: "Previous booking details will be reused in a new booking form.",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonText: "Continue",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#0A6ED3",
+      cancelButtonColor: "#6b7280",
+      background: "#081225",
+      color: "#ffffff",
+    });
+
+    if (!result.isConfirmed) return;
+
+    navigate("/student/bookings/new", {
+      state: {
+        bookingData: {
+          resourceId: booking.resourceId || "",
+          date: booking.bookingDate || booking.date || "",
+          startTime: booking.startTime || "",
+          endTime: booking.endTime || "",
+          purpose: booking.purpose || "",
+          attendees: booking.attendees || "",
+        },
+      },
+    });
   };
 
   const getStatusBadge = (status) => {
@@ -90,26 +179,13 @@ function StudentBookings() {
   return (
     <div className="bg-[#000919] min-h-screen p-6 md:p-8 text-white">
       <div className="max-w-7xl mx-auto">
-
-        {/* 🔹 HEADER SECTION (UPDATED) */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-semibold mb-2">My Bookings</h2>
-            <p className="text-gray-400">
-              View the status of your submitted booking requests.
-            </p>
-          </div>
-
-          {/* ✅ NEW BUTTON: View Calendar */}
-          <Link
-            to="/student/bookings/calendar"
-            className="bg-[#0A6ED3] hover:bg-blue-600 text-white font-semibold px-5 py-3 rounded-xl transition"
-          >
-            View Calendar
-          </Link>
+        <div className="mb-8">
+          <h2 className="text-3xl font-semibold mb-2">My Bookings</h2>
+          <p className="text-gray-400">
+            View the status of your submitted booking requests.
+          </p>
         </div>
 
-        {/* STATS CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
           <div className="bg-[#081225] p-5 rounded-2xl border border-white/10">
             <p className="text-gray-400 text-sm">Total Bookings</p>
@@ -148,7 +224,6 @@ function StudentBookings() {
           </div>
         )}
 
-        {/* TABLE */}
         <div className="bg-[#081225] p-6 rounded-2xl border border-white/10 overflow-x-auto">
           {loading ? (
             <p className="text-gray-400">Loading bookings...</p>
@@ -168,36 +243,59 @@ function StudentBookings() {
                   <th className="py-3 px-3">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {bookings.map((booking) => (
                   <tr key={booking.id} className="border-b border-white/5">
                     <td className="py-4 px-3 font-medium">
-                      {booking.facilityName || booking.equipmentName || "-"}
+                      {booking.facilityName ||
+                        booking.resourceName ||
+                        booking.equipmentName ||
+                        "-"}
                     </td>
-                    <td className="py-4 px-3">{booking.bookingDate || "-"}</td>
+
+                    <td className="py-4 px-3">
+                      {booking.bookingDate || booking.date || "-"}
+                    </td>
+
                     <td className="py-4 px-3">
                       {booking.startTime} - {booking.endTime}
                     </td>
+
                     <td className="py-4 px-3 max-w-[220px] truncate">
                       {booking.purpose || "-"}
                     </td>
+
                     <td className="py-4 px-3">{booking.attendees ?? "-"}</td>
+
                     <td className="py-4 px-3">
                       <span className={getStatusBadge(booking.status)}>
                         {booking.status}
                       </span>
                     </td>
+
                     <td className="py-4 px-3 text-gray-400">
-                      {booking.adminReason || "-"}
+                      {booking.adminReason || booking.reason || "-"}
                     </td>
+
                     <td className="py-4 px-3">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         {booking.status === "APPROVED" && (
                           <button
                             onClick={() => handleCancel(booking.id)}
                             className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
                           >
                             Cancel
+                          </button>
+                        )}
+
+                        {(booking.status === "REJECTED" ||
+                          booking.status === "CANCELLED") && (
+                          <button
+                            onClick={() => handleBookAgain(booking)}
+                            className="bg-[#0A6ED3] hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm"
+                          >
+                            Book Again
                           </button>
                         )}
 

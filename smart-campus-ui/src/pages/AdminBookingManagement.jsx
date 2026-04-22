@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import {
   approveBooking,
   getAllBookings,
@@ -60,18 +61,51 @@ function AdminBookingManagement() {
     }
   };
 
+  const swalTheme = {
+    background: "#081225",
+    color: "#ffffff",
+  };
+
   const handleApprove = async (bookingId) => {
+    const result = await Swal.fire({
+      ...swalTheme,
+      title: "Approve booking?",
+      text: "This booking request will be approved.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, approve",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#3b82f6",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       setProcessingId(bookingId);
       setMessage("");
 
       await approveBooking(bookingId, "Approved by admin");
 
-      setMessage("Booking approved successfully.");
+      await Swal.fire({
+        ...swalTheme,
+        title: "Approved!",
+        text: "Booking approved successfully.",
+        icon: "success",
+        confirmButtonColor: "#0A6ED3",
+      });
+
       await fetchBookings();
     } catch (error) {
       console.error("Approve failed:", error);
-      setMessage("Failed to approve booking.");
+
+      await Swal.fire({
+        ...swalTheme,
+        title: "Failed",
+        text: "Failed to approve booking.",
+        icon: "error",
+        confirmButtonColor: "#dc2626",
+      });
     } finally {
       setProcessingId(null);
     }
@@ -101,29 +135,72 @@ function AdminBookingManagement() {
 
       await rejectBooking(selectedBookingId, rejectReason);
 
-      setMessage("Booking rejected successfully.");
       closeRejectModal();
+
+      await Swal.fire({
+        ...swalTheme,
+        title: "Rejected!",
+        text: "Booking rejected successfully.",
+        icon: "success",
+        confirmButtonColor: "#0A6ED3",
+      });
+
       await fetchBookings();
     } catch (error) {
       console.error("Reject failed:", error);
-      setMessage("Failed to reject booking.");
+
+      await Swal.fire({
+        ...swalTheme,
+        title: "Failed",
+        text: "Failed to reject booking.",
+        icon: "error",
+        confirmButtonColor: "#dc2626",
+      });
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleCancel = async (bookingId) => {
+    const result = await Swal.fire({
+      ...swalTheme,
+      title: "Cancel booking?",
+      text: "This approved booking will be cancelled.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, cancel",
+      cancelButtonText: "Keep booking",
+      confirmButtonColor: "#f97316",
+      cancelButtonColor: "#3b82f6",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       setProcessingId(bookingId);
       setMessage("");
 
       await cancelBooking(bookingId, "Cancelled by admin");
 
-      setMessage("Booking cancelled successfully.");
+      await Swal.fire({
+        ...swalTheme,
+        title: "Cancelled!",
+        text: "Booking cancelled successfully.",
+        icon: "success",
+        confirmButtonColor: "#0A6ED3",
+      });
+
       await fetchBookings();
     } catch (error) {
       console.error("Cancel failed:", error);
-      setMessage("Failed to cancel booking.");
+
+      await Swal.fire({
+        ...swalTheme,
+        title: "Failed",
+        text: "Failed to cancel booking.",
+        icon: "error",
+        confirmButtonColor: "#dc2626",
+      });
     } finally {
       setProcessingId(null);
     }
@@ -316,7 +393,9 @@ function AdminBookingManagement() {
                         {processingId === booking.id ? "..." : "Cancel"}
                       </button>
                     ) : (
-                      <span className="text-gray-500 text-sm">No actions</span>
+                      <span className="inline-flex items-center rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-400">
+                        No actions
+                      </span>
                     )}
                   </td>
                 </tr>
