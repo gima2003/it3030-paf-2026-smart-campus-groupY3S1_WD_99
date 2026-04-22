@@ -10,6 +10,7 @@ import java.util.List;
 
 @Repository
 public interface UserNotificationRepository extends JpaRepository<UserNotification, Long> {
+    List<UserNotification> findByNotification(com.smartcampus.smart_campus_api.entity.AdminNotification notification);
 
     @Query("SELECT un FROM UserNotification un WHERE un.recipientUserId = :userId AND un.isDeleted = false " +
            "AND un.notification.status IN ('SENT') AND (un.notification.startDate IS NULL OR un.notification.startDate <= CURRENT_TIMESTAMP) " +

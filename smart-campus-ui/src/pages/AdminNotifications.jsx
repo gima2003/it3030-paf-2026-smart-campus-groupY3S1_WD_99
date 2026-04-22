@@ -45,10 +45,20 @@ function AdminNotifications() {
     };
 
     const handleResend = async (id) => {
-        if (!window.confirm("Are you sure you want to resend this notification?")) return;
+        const result = await Swal.fire({
+            title: "Are you sure you want to resend this notification?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#0A6ED3",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, resend it!"
+        });
+
+        if (!result.isConfirmed) return;
         try {
             await notificationService.resendNotification(id);
             showToast("Notification resent", "success");
+            window.dispatchEvent(new Event("notificationsUpdated"));
             fetchNotifications();
         } catch (error) {
             showToast("Failed to resend notification", "error");
@@ -67,16 +77,16 @@ function AdminNotifications() {
     return (
         <div className="p-8 bg-[#000919] min-h-[calc(100vh-64px)] -m-[20px]">
             <div className="flex justify-between items-center mb-6">
-                 <div>
-                     <h1 className="text-2xl font-bold text-white">Manage Notifications</h1>
-                     <p className="text-gray-400 text-sm mt-1">Create and manage alerts across the platform</p>
-                 </div>
-                 <button 
-                     onClick={() => setIsCreateModalOpen(true)}
-                     className="bg-[#0A6ED3] hover:bg-[#0855A6] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
-                 >
-                     <FaPlus /> Create Notification
-                 </button>
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Manage Notifications</h1>
+                    <p className="text-gray-400 text-sm mt-1">Create and manage alerts across the platform</p>
+                </div>
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="bg-[#0A6ED3] hover:bg-[#0855A6] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+                >
+                    <FaPlus /> Create Notification
+                </button>
             </div>
 
             <div className="bg-[#001736] border border-white/5 rounded-xl overflow-hidden">
@@ -114,7 +124,7 @@ function AdminNotifications() {
                                 </td>
                                 <td className="px-6 py-4 text-right space-x-4">
                                     {notif.status !== 'EXPIRED' && (
-                                        <button 
+                                        <button
                                             onClick={() => handleExpire(notif.id)}
                                             className="text-yellow-500 hover:text-yellow-400 transition"
                                             title="Expire"
@@ -122,7 +132,7 @@ function AdminNotifications() {
                                             <FaTimesCircle className="inline text-lg" />
                                         </button>
                                     )}
-                                    <button 
+                                    <button
                                         onClick={() => handleResend(notif.id)}
                                         className="text-[#0A6ED3] hover:text-blue-400 transition"
                                         title="Resend"
@@ -143,10 +153,10 @@ function AdminNotifications() {
                 </table>
             </div>
 
-            <CreateNotificationModal 
-                isOpen={isCreateModalOpen} 
-                onClose={() => setIsCreateModalOpen(false)} 
-                onSuccess={fetchNotifications} 
+            <CreateNotificationModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSuccess={fetchNotifications}
             />
         </div>
     );

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { getAllUsers } from "../services/userService";
 import {
   FaComments,
   FaPaperPlane,
@@ -39,12 +40,13 @@ function AdminTickets() {
 
   const fetchTechnicians = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/api/technicians`);
-      setTechnicians(res.data);
+      const users = await getAllUsers();
+      const techs = users.filter(u => u.role === "TECHNICIAN");
+      setTechnicians(techs);
     } catch (err) {
       console.error("Error fetching technicians:", err);
     }
-  }, [API]);
+  }, []);
 
   const fetchComments = useCallback(
     async (ticketId) => {
@@ -467,10 +469,10 @@ function AdminTickets() {
                 >
                   <option value="">Select Technician</option>
                   {technicians
-                    .filter((tech) => tech.status === "ACTIVE")
+                    .filter((tech) => tech.isActive)
                     .map((tech) => (
                       <option key={tech.id} value={tech.email}>
-                        {tech.fullName} - {tech.specialization}
+                        {tech.firstName} {tech.lastName} - {tech.specialization || "General"}
                       </option>
                     ))}
                 </select>

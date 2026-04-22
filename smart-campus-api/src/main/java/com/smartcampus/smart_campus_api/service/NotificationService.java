@@ -164,10 +164,23 @@ public class NotificationService {
             // For resending, simply extend the dates and mark sent
             an.setStatus(NotificationStatus.SENT);
             an.setSentAt(LocalDateTime.now());
+            an.setCreatedAt(LocalDateTime.now()); // Update created date so it sorts to top
             if (an.getExpiryDate() != null && an.getExpiryDate().isBefore(LocalDateTime.now())) {
                  an.setExpiryDate(LocalDateTime.now().plusWeeks(1));
             }
-            adminNotificationRepo.save(an);
+            AdminNotification savedAn = adminNotificationRepo.save(an);
+            
+            List<UserNotification> existingUsers = userNotificationRepo.findByNotification(savedAn);
+            if (existingUsers.isEmpty()) {
+                distributeNotification(savedAn);
+            } else {
+                for (UserNotification un : existingUsers) {
+                    un.setIsRead(false);
+                    un.setIsDeleted(false);
+                    un.setDeliveredAt(LocalDateTime.now());
+                }
+                userNotificationRepo.saveAll(existingUsers);
+            }
         });
     }
 

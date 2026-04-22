@@ -1,39 +1,29 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { getAllUsers } from "../services/userService";
+import AdminViewUserModal from "../components/AdminViewUserModal";
 
 function AdminTechnicians() {
   const [technicians, setTechnicians] = useState([]);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingTech, setViewingTech] = useState(null);
 
   const fetchTechnicians = async () => {
     try {
-      const res = await axios.get("http://localhost:8081/api/technicians");
-      setTechnicians(res.data);
+      const users = await getAllUsers();
+      const techs = users.filter(u => u.role === "TECHNICIAN");
+      setTechnicians(techs);
     } catch (err) {
       console.error("Error fetching technicians:", err);
     }
   };
 
- useEffect(() => {
-  const loadTechnicians = async () => {
-    try {
-      const res = await axios.get("http://localhost:8081/api/technicians");
-      setTechnicians(res.data);
-    } catch (err) {
-      console.error("Error fetching technicians:", err);
-    }
-  };
+  useEffect(() => {
+    fetchTechnicians();
+  }, []);
 
-  loadTechnicians();
-}, []);
-
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://localhost:8081/api/technicians/${id}`);
-      fetchTechnicians();
-    } catch (err) {
-      console.error("Error deleting technician:", err);
-      alert("Failed to delete technician");
-    }
+  const handleViewDetails = (tech) => {
+    setViewingTech(tech);
+    setIsViewModalOpen(true);
   };
 
   return (
@@ -66,28 +56,28 @@ function AdminTechnicians() {
                 key={tech.id}
                 className="border-b border-white/10 text-gray-200"
               >
-                <td className="px-4 py-3">{tech.id}</td>
-                <td className="px-4 py-3">{tech.fullName}</td>
+                <td className="px-4 py-3">{tech.employeeId || tech.id}</td>
+                <td className="px-4 py-3">{tech.firstName} {tech.lastName}</td>
                 <td className="px-4 py-3">{tech.email}</td>
                 <td className="px-4 py-3">{tech.phone}</td>
-                <td className="px-4 py-3">{tech.specialization}</td>
+                <td className="px-4 py-3">{tech.specialization || "General"}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      tech.status === "ACTIVE"
+                      tech.isActive
                         ? "bg-green-500/20 text-green-400"
                         : "bg-red-500/20 text-red-400"
                     }`}
                   >
-                    {tech.status}
+                    {tech.isActive ? "ACTIVE" : "INACTIVE"}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <button
-                    onClick={() => handleDelete(tech.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition"
+                    onClick={() => handleViewDetails(tech)}
+                    className="bg-[#0A6ED3]/20 text-[#0A6ED3] px-3 py-1 rounded-lg hover:bg-[#0A6ED3]/30 transition"
                   >
-                    Delete
+                    View Tec Details
                   </button>
                 </td>
               </tr>
@@ -103,6 +93,12 @@ function AdminTechnicians() {
           </tbody>
         </table>
       </div>
+
+      <AdminViewUserModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        user={viewingTech}
+      />
     </div>
   );
 }
