@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 function StudentTickets() {
   const [activeTab, setActiveTab] = useState("create");
@@ -53,6 +54,7 @@ function StudentTickets() {
 function CreateTicketForm() {
   const API = "http://localhost:8081";
   const { user } = useContext(AuthContext);
+  const { showToast } = useToast();
 
   const [form, setForm] = useState({
     itNumber: "",
@@ -167,26 +169,26 @@ function CreateTicketForm() {
             }
           );
 
-          alert("✅ Ticket submitted successfully with attachments!");
+          showToast("Ticket submitted successfully with attachments!", "success");
         } catch (uploadErr) {
           console.error("Attachment upload failed:", uploadErr);
           console.error("Upload response data:", uploadErr.response?.data);
           console.error("Upload status:", uploadErr.response?.status);
 
-          alert(
-            `⚠️ Ticket was created, but image upload failed. ${
+          showToast(
+            `Ticket was created, but image upload failed. ${
               uploadErr.response?.data || ""
-            }`
+            }`, "error"
           );
         }
       } else {
-        alert("✅ Ticket submitted successfully!");
+        showToast("Ticket submitted successfully!", "success");
       }
 
       resetForm();
     } catch (err) {
       console.error("Error submitting ticket:", err);
-      alert("❌ Failed to create ticket");
+      showToast("Failed to create ticket", "error");
     } finally {
       setLoading(false);
     }
@@ -449,6 +451,7 @@ function CreateTicketForm() {
 
 function MyTickets() {
   const API = "http://localhost:8081";
+  const { showToast } = useToast();
 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -594,9 +597,10 @@ function MyTickets() {
       await axios.post(`${API}/api/ticket-comments`, payload);
       setCommentText("");
       await fetchComments(selectedTicket.id);
+      showToast("Comment added successfully!", "success");
     } catch (err) {
       console.error("Error adding comment:", err);
-      alert("Failed to add comment");
+      showToast("Failed to add comment", "error");
     } finally {
       setCommentLoading(false);
     }
@@ -613,14 +617,14 @@ function MyTickets() {
       }
 
       console.log("Delete response:", res.data);
-      alert("Attachment deleted successfully");
+      showToast("Attachment deleted successfully", "success");
     } catch (err) {
       console.error("Error deleting attachment:", err);
       console.error("Backend response:", err.response?.data);
-      alert(
+      showToast(
         `Failed to delete attachment: ${
           err.response?.data || "Unknown error"
-        }`
+        }`, "error"
       );
     }
   };
@@ -695,13 +699,13 @@ function MyTickets() {
 
       await fetchTickets();
       setIsEditing(false);
-      alert("✅ Ticket updated successfully");
+      showToast("Ticket updated successfully!", "success");
     } catch (err) {
       console.error("Error updating ticket:", err);
-      alert(
+      showToast(
         err.response?.data?.message ||
           err.response?.data ||
-          "❌ Failed to update ticket"
+          "Failed to update ticket", "error"
       );
     } finally {
       setEditLoading(false);
