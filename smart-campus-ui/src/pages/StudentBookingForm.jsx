@@ -7,17 +7,19 @@ function StudentBookingForm() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // If user came from a selected resource page, keep that facility preselected
+  // Support both:
+  // 1. Book Now from resources page
+  // 2. Book Again from bookings page
   const selectedResourceId = location.state?.resourceId || "";
+  const bookingData = location.state?.bookingData || null;
 
   const [facilities, setFacilities] = useState([]);
   const [loadingFacilities, setLoadingFacilities] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Main booking form state
   const [formData, setFormData] = useState({
     userId: "",
-    resourceId: selectedResourceId,
+    resourceId: "",
     date: "",
     startTime: "",
     endTime: "",
@@ -25,28 +27,28 @@ function StudentBookingForm() {
     attendees: "",
   });
 
-  // Top-level form alerts
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Real-time availability state
   const [availability, setAvailability] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
-  // Initial load
   useEffect(() => {
     fetchFacilities();
 
     const storedUserId = localStorage.getItem("userId") || "1";
 
-    setFormData((prev) => ({
-      ...prev,
+    setFormData({
       userId: storedUserId,
-      resourceId: selectedResourceId || prev.resourceId,
-    }));
-  }, [selectedResourceId]);
+      resourceId: bookingData?.resourceId || selectedResourceId || "",
+      date: bookingData?.date || "",
+      startTime: bookingData?.startTime || "",
+      endTime: bookingData?.endTime || "",
+      purpose: bookingData?.purpose || "",
+      attendees: bookingData?.attendees || "",
+    });
+  }, [selectedResourceId, bookingData]);
 
-  // Real-time availability check
   useEffect(() => {
     const shouldCheck =
       formData.resourceId &&
@@ -54,13 +56,11 @@ function StudentBookingForm() {
       formData.startTime &&
       formData.endTime;
 
-    // If required fields are not filled, clear the availability box
     if (!shouldCheck) {
       setAvailability(null);
       return;
     }
 
-    // Frontend-side quick validation before API call
     if (formData.startTime >= formData.endTime) {
       setAvailability({
         available: false,
@@ -96,7 +96,6 @@ function StudentBookingForm() {
       }
     };
 
-    // Small delay so API is not called too aggressively while user is changing fields
     const timeoutId = setTimeout(() => {
       runAvailabilityCheck();
     }, 400);
@@ -104,12 +103,11 @@ function StudentBookingForm() {
     return () => clearTimeout(timeoutId);
   }, [formData.resourceId, formData.date, formData.startTime, formData.endTime]);
 
-  // Load facility dropdown data
   const fetchFacilities = async () => {
     try {
       setLoadingFacilities(true);
       const data = await getFacilities();
-      setFacilities(data);
+      setFacilities(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading facilities:", error);
       setErrorMessage("Failed to load facilities.");
@@ -118,7 +116,6 @@ function StudentBookingForm() {
     }
   };
 
-  // Generic input handler
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -131,7 +128,6 @@ function StudentBookingForm() {
     }));
   };
 
-  // When user clicks a suggested time slot, auto-fill start/end times
   const handleSuggestionClick = (slot) => {
     setSuccessMessage("");
     setErrorMessage("");
@@ -143,7 +139,6 @@ function StudentBookingForm() {
     }));
   };
 
-  // Final validation before create booking
   const validateForm = () => {
     if (!formData.resourceId) return "Please select a facility.";
     if (!formData.date) return "Please select a booking date.";
@@ -162,7 +157,6 @@ function StudentBookingForm() {
     return "";
   };
 
-  // Submit booking request
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -214,7 +208,6 @@ function StudentBookingForm() {
     }
   };
 
-  // Reset form
   const handleClear = () => {
     setSuccessMessage("");
     setErrorMessage("");
@@ -222,12 +215,12 @@ function StudentBookingForm() {
 
     setFormData((prev) => ({
       ...prev,
-      resourceId: selectedResourceId || "",
-      date: "",
-      startTime: "",
-      endTime: "",
-      purpose: "",
-      attendees: "",
+      resourceId: bookingData?.resourceId || selectedResourceId || "",
+      date: bookingData?.date || "",
+      startTime: bookingData?.startTime || "",
+      endTime: bookingData?.endTime || "",
+      purpose: bookingData?.purpose || "",
+      attendees: bookingData?.attendees || "",
     }));
   };
 
@@ -269,6 +262,11 @@ function StudentBookingForm() {
               <p>• Add a clear booking purpose.</p>
               <p>• Enter expected attendees where applicable.</p>
               <p>• Your request will be reviewed by admin.</p>
+              {bookingData && (
+                <p className="text-yellow-300">
+                  • Rebooking previous request. Review and update details before submitting.
+                </p>
+              )}
             </div>
           </div>
 
@@ -356,7 +354,6 @@ function StudentBookingForm() {
                 </div>
               </div>
 
-              {/* Real-time availability box + suggested slots */}
               {(checkingAvailability || availability) && (
                 <div
                   className={`rounded-xl px-4 py-3 text-sm border ${
@@ -373,7 +370,6 @@ function StudentBookingForm() {
                       : availability?.message}
                   </p>
 
-                  {/* Show suggested slots only when booking is unavailable */}
                   {!checkingAvailability &&
                     availability &&
                     !availability.available &&
