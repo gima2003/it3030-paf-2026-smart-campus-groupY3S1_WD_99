@@ -1,11 +1,21 @@
+import { useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminNavbar from "../components/AdminNavbar";
 import { Outlet } from "react-router-dom";
 
 function AdminLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
   return (
-    <div style={styles.container}>
-      <AdminSidebar />
+    <div className="flex h-screen bg-[#000919] text-white overflow-hidden">
+      <AdminSidebar
+        isSidebarOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
+      />
 
       <div style={styles.main}>
         <AdminNavbar />
