@@ -9,6 +9,7 @@ import Footer from "./components/Footer";
 
 import Login from "./pages/Login";
 import Features from "./pages/Features";
+import AboutPage from "./pages/AboutPage";
 
 import AdminLayout from "./pages/AdminLayout";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -78,6 +79,7 @@ function App() {
           <Route path="/verify-2fa" element={<MfaVerify />} />
           <Route path="/mfa-setup" element={<MfaSetup />} />
           <Route path="/features" element={<Features />} />
+          <Route path="/about" element={<AboutPage />} />
 
           {/* ✅ ADD THIS LINE RIGHT HERE */}
           <Route path="/contact" element={<ContactPage />} />

@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { FcGoogle } from "react-icons/fc";
+import AnimatedBackground from "../components/AnimatedBackground";
 
 function Login() {
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ function Login() {
 
   return (
     <div style={styles.container}>
+      <AnimatedBackground />
       <div style={styles.card}>
         <h2 style={styles.title}>Smart Campus Login</h2>
         <p style={{ textAlign: "center", color: "#ccc", marginBottom: "30px", fontSize: "14px" }}>
@@ -81,18 +83,13 @@ function Login() {
   );
 }
 
-/* 🔥 STYLES */
 const styles = {
   container: {
     height: "100vh",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: `
-      radial-gradient(circle at 20% 30%, rgba(10,110,211,0.4), transparent 40%),
-      radial-gradient(circle at 80% 70%, rgba(10,110,211,0.3), transparent 40%),
-      linear-gradient(135deg, #000919, #020817)
-    `,
+    backgroundColor: "#000919",
     position: "relative",
     overflow: "hidden"
   },

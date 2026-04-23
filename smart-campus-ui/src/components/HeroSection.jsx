@@ -1,19 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import dashboardPreview from "../assets/prev1.jpeg";
+import AnimatedBackground from "./AnimatedBackground";
 
 function HeroSection() {
   const navigate = useNavigate();
 
   return (
     <section className="relative bg-[#000919] overflow-hidden min-h-[90vh] flex items-center">
-      
-      {/* --- Background Animated Effects --- */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        {/* Glow 1 */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[50%] rounded-full bg-[#0A6ED3]/20 blur-[120px] animate-pulse pointer-events-none mix-blend-screen" style={{ animationDuration: '4s' }}></div>
-        {/* Glow 2 */}
-        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[50%] rounded-full bg-indigo-600/20 blur-[100px] animate-pulse pointer-events-none mix-blend-screen" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
-      </div>
+      <AnimatedBackground />
 
       {/* --- Main Content --- */}
       <div className="max-w-7xl mx-auto w-full px-8 grid md:grid-cols-2 items-center gap-16 relative z-10 py-12">

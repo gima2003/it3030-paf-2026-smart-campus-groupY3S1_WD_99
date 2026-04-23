@@ -3,6 +3,7 @@ import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useNavigate } from "react-router-dom";
+import AnimatedBackground from "../components/AnimatedBackground";
 
 function MfaSetup() {
   const { token, fetchUser } = useContext(AuthContext);
@@ -62,6 +63,7 @@ function MfaSetup() {
 
   return (
     <div style={styles.container}>
+      <AnimatedBackground />
       <div style={styles.card}>
         <h2 style={styles.title}>Enable Two-Factor Authentication</h2>
         
@@ -70,7 +72,7 @@ function MfaSetup() {
         ) : (
           <>
             <p style={styles.instruction}>
-              1. Open <strong>Google Authenticator</strong> or <strong>Microsoft Authenticator</strong> app on your phone.
+              1. Open <strong className="text-white">Google Authenticator</strong> or <strong className="text-white">Microsoft Authenticator</strong> app on your phone.
             </p>
             <p style={styles.instruction}>
               2. Scan the QR code below:
@@ -119,26 +121,30 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "linear-gradient(135deg, #f3f4f6, #e5e7eb)"
+    backgroundColor: "#000919",
+    position: "relative",
+    overflow: "hidden"
   },
   card: {
-    background: "#fff",
+    backdropFilter: "blur(20px)",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.1)",
     padding: "40px",
-    borderRadius: "12px",
+    borderRadius: "16px",
     width: "100%",
     maxWidth: "450px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-    border: "1px solid #f0f0f0"
+    boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
+    color: "white"
   },
   title: {
     textAlign: "center",
     marginBottom: "20px",
-    color: "#1f2937",
+    color: "#ffffff",
     fontWeight: "700",
     fontSize: "22px"
   },
   instruction: {
-    color: "#4b5563",
+    color: "#d1d5db",
     fontSize: "14px",
     marginBottom: "10px",
     lineHeight: "1.5"
@@ -148,9 +154,9 @@ const styles = {
     justifyContent: "center",
     margin: "20px 0",
     padding: "15px",
-    background: "#f9fafb",
+    background: "rgba(255,255,255,0.1)",
     borderRadius: "8px",
-    border: "1px dashed #d1d5db"
+    border: "1px dashed rgba(255,255,255,0.3)"
   },
   qrImage: {
     width: "200px",
@@ -167,15 +173,15 @@ const styles = {
     fontSize: "20px",
     textAlign: "center",
     letterSpacing: "4px",
-    border: "1px solid #d1d5db",
+    border: "1px solid rgba(255,255,255,0.2)",
     borderRadius: "6px",
     width: "100%",
-    backgroundColor: "#f9fafb",
-    color: "#1f2937",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    color: "#ffffff",
     fontWeight: "600"
   },
   button: {
-    background: "#1d4ed8",
+    background: "#0A6ED3",
     color: "#fff",
     padding: "14px",
     border: "none",
@@ -183,11 +189,12 @@ const styles = {
     fontSize: "16px",
     fontWeight: "600",
     cursor: "pointer",
-    width: "100%"
+    width: "100%",
+    transition: "all 0.3s ease"
   },
   loadingText: {
     textAlign: "center",
-    color: "#6b7280"
+    color: "#9ca3af"
   }
 };
 
