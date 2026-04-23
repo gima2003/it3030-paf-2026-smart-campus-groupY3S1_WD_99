@@ -86,6 +86,8 @@ const normalizeFacility = (facility) => ({
   location: facility.building || "",
   capacity: facility.capacity ?? 0,
   indoorOutdoor: facility.indoorOutdoor || "INDOOR",
+  equipmentIds: facility.equipmentIds || [],
+  equipmentNames: facility.equipmentNames || [],
 });
 
 const normalizeEquipment = (equipment) => ({
@@ -105,7 +107,7 @@ const normalizeEquipment = (equipment) => ({
   indoorOutdoor: null,
 });
 
-const buildFacilityPayload = (formData) => ({
+const buildFacilityPayload = (formData, existingEquipmentIds = []) => ({
   name: formData.name,
   code: formData.resourceCode,
   description: formData.description,
@@ -115,7 +117,7 @@ const buildFacilityPayload = (formData) => ({
   indoorOutdoor: formData.indoorOutdoor || "INDOOR",
   status: formData.status,
   active: formData.isBookable,
-  equipmentIds: [],
+  equipmentIds: existingEquipmentIds,
 });
 
 const buildEquipmentPayload = (formData) => ({
@@ -187,6 +189,112 @@ const deleteRemovedImagesForResource = async (
   }
 };
 
+function AlertModal({
+  isOpen,
+  type = "info",
+  title,
+  message,
+  primaryText = "OK",
+  secondaryText,
+  onPrimaryClick,
+  onSecondaryClick,
+  onClose,
+}) {
+  if (!isOpen) return null;
+
+  const isSuccess = type === "success";
+  const isError = type === "error";
+  const isWarning = type === "warning";
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl text-center relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl leading-none"
+        >
+          ✕
+        </button>
+
+        <div className="flex justify-center mb-6">
+          <div
+            className={`relative flex items-center justify-center w-28 h-28 rounded-full ${
+              isSuccess
+                ? "bg-blue-100"
+                : isError
+                ? "bg-red-100"
+                : isWarning
+                ? "bg-yellow-100"
+                : "bg-gray-100"
+            }`}
+          >
+            <div
+              className={`absolute w-20 h-20 rounded-full ${
+                isSuccess
+                  ? "bg-blue-200/60"
+                  : isError
+                  ? "bg-red-200/60"
+                  : isWarning
+                  ? "bg-yellow-200/60"
+                  : "bg-gray-200/60"
+              }`}
+            />
+            <div
+              className={`relative z-10 flex items-center justify-center w-16 h-16 rounded-full ${
+                isSuccess
+                  ? "bg-blue-500"
+                  : isError
+                  ? "bg-red-400"
+                  : isWarning
+                  ? "bg-yellow-500"
+                  : "bg-gray-500"
+              }`}
+            >
+              {isSuccess ? (
+                <span className="text-white text-3xl font-bold">✓</span>
+              ) : isError ? (
+                <span className="text-white text-3xl font-bold">!</span>
+              ) : isWarning ? (
+                <span className="text-white text-3xl font-bold">?</span>
+              ) : (
+                <span className="text-white text-3xl font-bold">i</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <h2 className="text-3xl font-extrabold text-[#2B2F55] mb-3">
+          {title}
+        </h2>
+
+        <p className="text-gray-500 text-base leading-6 mb-6">{message}</p>
+
+        <div className="space-y-3">
+          <button
+            onClick={onPrimaryClick}
+            className={`w-full font-semibold py-3 rounded-lg transition ${
+              isError
+                ? "bg-red-500 hover:bg-red-600 text-white"
+                : "bg-[#1E90FF] hover:bg-[#187bdb] text-white"
+            }`}
+          >
+            {primaryText}
+          </button>
+
+          {secondaryText && (
+            <button
+              onClick={onSecondaryClick}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-[#2B2F55] font-medium py-3 rounded-lg transition"
+            >
+              {secondaryText}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StatCard({ label, value, colorClass = "text-white" }) {
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-3">
@@ -219,9 +327,6 @@ function ResourceRow({ resource, onView, onEdit, onDelete }) {
 
       <td className="px-4 py-2.5">
         <p className="font-medium text-white">{resource.name}</p>
-        <p className="text-xs text-gray-400 line-clamp-1">
-          {resource.description || "No description"}
-        </p>
       </td>
 
       <td className="px-4 py-2.5 text-gray-300">{formatEnum(resource.type)}</td>
@@ -357,6 +462,43 @@ function ResourceManagement() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState(null);
 
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+    primaryText: "OK",
+    secondaryText: "",
+    onPrimary: null,
+    onSecondary: null,
+  });
+
+  const closeAlertModal = () => {
+    setAlertModal({
+      isOpen: false,
+      type: "info",
+      title: "",
+      message: "",
+      primaryText: "OK",
+      secondaryText: "",
+      onPrimary: null,
+      onSecondary: null,
+    });
+  };
+
+  const showInfoModal = (title, message, type = "info") => {
+    setAlertModal({
+      isOpen: true,
+      type,
+      title,
+      message,
+      primaryText: "OK",
+      secondaryText: "",
+      onPrimary: () => closeAlertModal(),
+      onSecondary: null,
+    });
+  };
+
   const fetchResources = async () => {
     try {
       setLoading(true);
@@ -376,7 +518,7 @@ function ResourceManagement() {
       setResources([...normalizedFacilities, ...normalizedEquipment]);
     } catch (error) {
       console.error("Error fetching resources:", error);
-      alert("Failed to load resources");
+      showInfoModal("Uh oh!", "Failed to load resources.", "error");
     } finally {
       setLoading(false);
     }
@@ -406,7 +548,7 @@ function ResourceManagement() {
       setIsFormOpen(true);
     } catch (error) {
       console.error("Error loading resource images:", error);
-      alert("Failed to load resource images");
+      showInfoModal("Uh oh!", "Failed to load resource images.", "error");
     }
   };
 
@@ -416,8 +558,8 @@ function ResourceManagement() {
   };
 
   const handleOpenDetails = (resource) => {
-  setSelectedResource(resource);
-  setIsDetailsOpen(true);
+    setSelectedResource(resource);
+    setIsDetailsOpen(true);
   };
 
   const handleCloseDetails = () => {
@@ -428,8 +570,14 @@ function ResourceManagement() {
   const handleSubmitForm = async (formData) => {
     try {
       const isFacility = formData.resourceCategory === "FACILITY";
+
+      const existingEquipmentIds =
+        isFacility && editingResource?.resourceCategory === "FACILITY"
+          ? editingResource.equipmentIds || []
+          : [];
+
       const payload = isFacility
-        ? buildFacilityPayload(formData)
+        ? buildFacilityPayload(formData, existingEquipmentIds)
         : buildEquipmentPayload(formData);
 
       if (editingResource) {
@@ -456,7 +604,7 @@ function ResourceManagement() {
           formData.selectedImages || []
         );
 
-        alert("Resource updated successfully");
+        showInfoModal("Updated!", "Resource updated successfully.", "success");
       } else {
         const createUrl = isFacility ? FACILITY_API_URL : EQUIPMENT_API_URL;
         const createResponse = await axios.post(createUrl, payload);
@@ -470,38 +618,49 @@ function ResourceManagement() {
           formData.selectedImages || []
         );
 
-        alert("Resource created successfully");
+        showInfoModal("Created!", "Resource created successfully.", "success");
       }
 
       handleCloseForm();
       fetchResources();
     } catch (error) {
       console.error("Error saving resource:", error);
-      alert(
+      showInfoModal(
+        "Uh oh!",
         error?.response?.data?.message ||
-          "Failed to save resource or images. Check backend validation and upload flow."
+          "Failed to save resource or images. Check backend validation and upload flow.",
+        "error"
       );
     }
   };
 
-  const handleDelete = async (resource) => {
-    if (!window.confirm(`Are you sure you want to delete "${resource.name}"?`)) {
-      return;
-    }
+  const handleDelete = (resource) => {
+    setAlertModal({
+      isOpen: true,
+      type: "warning",
+      title: "Are you sure?",
+      message: `Are you sure you want to delete "${resource.name}"?`,
+      primaryText: "Delete",
+      secondaryText: "Cancel",
+      onPrimary: async () => {
+        closeAlertModal();
 
-    try {
-      const deleteUrl =
-        resource.resourceCategory === "FACILITY"
-          ? `${FACILITY_API_URL}/${resource.id}`
-          : `${EQUIPMENT_API_URL}/${resource.id}`;
+        try {
+          const deleteUrl =
+            resource.resourceCategory === "FACILITY"
+              ? `${FACILITY_API_URL}/${resource.id}`
+              : `${EQUIPMENT_API_URL}/${resource.id}`;
 
-      await axios.delete(deleteUrl);
-      alert("Resource deleted successfully");
-      fetchResources();
-    } catch (error) {
-      console.error("Error deleting resource:", error);
-      alert("Failed to delete resource");
-    }
+          await axios.delete(deleteUrl);
+          showInfoModal("Deleted!", "Resource deleted successfully.", "success");
+          fetchResources();
+        } catch (error) {
+          console.error("Error deleting resource:", error);
+          showInfoModal("Uh oh!", "Failed to delete resource.", "error");
+        }
+      },
+      onSecondary: () => closeAlertModal(),
+    });
   };
 
   const filteredResources = useMemo(() => {
@@ -533,10 +692,10 @@ function ResourceManagement() {
   }, [filteredResources]);
 
   const showFacilitiesTable =
-  resourceViewFilter === "ALL" || resourceViewFilter === "FACILITY";
+    resourceViewFilter === "ALL" || resourceViewFilter === "FACILITY";
 
   const showEquipmentTable =
-  resourceViewFilter === "ALL" || resourceViewFilter === "EQUIPMENT";
+    resourceViewFilter === "ALL" || resourceViewFilter === "EQUIPMENT";
 
   const stats = useMemo(
     () => ({
@@ -551,111 +710,125 @@ function ResourceManagement() {
   );
 
   return (
-    <div className="text-white">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
-        <div>
-          <h1 className="text-xl font-semibold">
-            Facilities & Resource Management
-          </h1>
-          <p className="text-gray-400 text-xs mt-0.5">
-            Manage campus facilities and equipment resources in one place
-          </p>
+    <>
+      <div className="text-white">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
+          <div>
+            <h1 className="text-xl font-semibold">
+              Facilities & Resource Management
+            </h1>
+            <p className="text-gray-400 text-xs mt-0.5">
+              Manage campus facilities and equipment resources in one place
+            </p>
+          </div>
+          <button
+            onClick={handleOpenAddForm}
+            className="bg-[#0A6ED3] hover:bg-[#054E98] px-4 py-2 rounded-lg text-sm font-medium transition"
+          >
+            + Add Resource
+          </button>
         </div>
-        <button
-          onClick={handleOpenAddForm}
-          className="bg-[#0A6ED3] hover:bg-[#054E98] px-4 py-2 rounded-lg text-sm font-medium transition"
-        >
-          + Add Resource
-        </button>
-      </div>
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
-        <StatCard label="Total Resources" value={stats.total} />
-        <StatCard
-          label="Active"
-          value={stats.active}
-          colorClass="text-green-400"
-        />
-        <StatCard
-          label="Under Maintenance"
-          value={stats.maintenance}
-          colorClass="text-yellow-400"
-        />
-        <StatCard
-          label="Out of Service"
-          value={stats.outOfService}
-          colorClass="text-red-400"
-        />
-      </div>
-
-      <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
-          <input
-            type="text"
-            placeholder="Search by code, name, or location"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+          <StatCard label="Total Resources" value={stats.total} />
+          <StatCard
+            label="Active"
+            value={stats.active}
+            colorClass="text-green-400"
           />
-
-          <FilterSelect
-            value={resourceViewFilter}
-            onChange={setResourceViewFilter}
-            options={RESOURCE_VIEW_OPTIONS}
+          <StatCard
+            label="Under Maintenance"
+            value={stats.maintenance}
+            colorClass="text-yellow-400"
           />
-
-          <FilterSelect
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={STATUS_OPTIONS}
-          />
-
-          <FilterSelect
-            value={typeFilter}
-            onChange={setTypeFilter}
-            options={TYPE_OPTIONS}
+          <StatCard
+            label="Out of Service"
+            value={stats.outOfService}
+            colorClass="text-red-400"
           />
         </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
+            <input
+              type="text"
+              placeholder="Search by code, name, or location"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
+            />
+
+            <FilterSelect
+              value={resourceViewFilter}
+              onChange={setResourceViewFilter}
+              options={RESOURCE_VIEW_OPTIONS}
+            />
+
+            <FilterSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={STATUS_OPTIONS}
+            />
+
+            <FilterSelect
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={TYPE_OPTIONS}
+            />
+          </div>
+        </div>
+
+        {showFacilitiesTable && (
+          <ResourceTableSection
+            title="Facilities"
+            resources={facilityResources}
+            loading={loading}
+            emptyMessage="No facilities found"
+            onView={handleOpenDetails}
+            onEdit={handleOpenEditForm}
+            onDelete={handleDelete}
+          />
+        )}
+
+        {showEquipmentTable && (
+          <ResourceTableSection
+            title="Equipment"
+            resources={equipmentResources}
+            loading={loading}
+            emptyMessage="No equipment found"
+            onView={handleOpenDetails}
+            onEdit={handleOpenEditForm}
+            onDelete={handleDelete}
+          />
+        )}
+
+        <ResourceForm
+          isOpen={isFormOpen}
+          onClose={handleCloseForm}
+          onSubmit={handleSubmitForm}
+          initialData={editingResource}
+        />
+
+        <ResourceDetailsModal
+          isOpen={isDetailsOpen}
+          onClose={handleCloseDetails}
+          resource={selectedResource}
+          onResourceUpdated={fetchResources}
+        />
       </div>
 
-      {showFacilitiesTable && (
-        <ResourceTableSection
-          title="Facilities"
-          resources={facilityResources}
-          loading={loading}
-          emptyMessage="No facilities found"
-          onView={handleOpenDetails}
-          onEdit={handleOpenEditForm}
-          onDelete={handleDelete}
-        />
-      )}
-
-      {showEquipmentTable && (
-        <ResourceTableSection
-          title="Equipment"
-          resources={equipmentResources}
-          loading={loading}
-          emptyMessage="No equipment found"
-          onView={handleOpenDetails}
-          onEdit={handleOpenEditForm}
-          onDelete={handleDelete}
-        />
-      )}
-
-      <ResourceForm
-        isOpen={isFormOpen}
-        onClose={handleCloseForm}
-        onSubmit={handleSubmitForm}
-        initialData={editingResource}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        type={alertModal.type}
+        title={alertModal.title}
+        message={alertModal.message}
+        primaryText={alertModal.primaryText}
+        secondaryText={alertModal.secondaryText}
+        onPrimaryClick={() => alertModal.onPrimary?.()}
+        onSecondaryClick={() => alertModal.onSecondary?.()}
+        onClose={closeAlertModal}
       />
-
-      <ResourceDetailsModal
-        isOpen={isDetailsOpen}
-        onClose={handleCloseDetails}
-        resource={selectedResource}
-        onResourceUpdated={fetchResources}
-      />
-    </div>
+    </>
   );
 }
 

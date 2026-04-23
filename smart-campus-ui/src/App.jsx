@@ -33,6 +33,7 @@ import StudentBookings from "./pages/StudentBookings";
 import StudentResources from "./pages/StudentResources";
 import StudentReport from "./pages/StudentReport";
 import StudentNotifications from "./pages/StudentNotifications";
+import ContactPage from "./pages/ContactPage"; // adjust path if needed
 
 /* 🔥 LANDING PAGE */
 function LandingPage() {
@@ -62,8 +63,8 @@ function App() {
           {/* LOGIN */}
           <Route path="/login" element={<Login />} />
 
-          {/* LOGIN */}
-          <Route path="/login" element={<Login />} />
+        {/* ✅ ADD THIS LINE RIGHT HERE */}
+        <Route path="/contact" element={<ContactPage />} />
 
       {/* ADMIN */}
       <Route

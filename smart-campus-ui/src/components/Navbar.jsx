@@ -25,7 +25,12 @@ function Navbar() {
         <a href="#" className="hover:text-white transition">Home</a>
         <a href="#" className="hover:text-white transition">Features</a>
         <a href="#" className="hover:text-white transition">About</a>
-        <a href="#" className="hover:text-white transition">Contact</a>
+        <button
+          onClick={() => navigate("/contact")}
+          className="hover:text-white transition text-gray-300 font-medium"
+        >
+          Contact
+        </button>
       </div>
 
       {/* Right - Auth */}

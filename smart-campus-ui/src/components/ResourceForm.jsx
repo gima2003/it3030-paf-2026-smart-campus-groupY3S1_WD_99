@@ -76,13 +76,13 @@ function ResourceForm({ isOpen, onClose, onSubmit, initialData }) {
   }, [initialData, isOpen]);
 
   useEffect(() => {
-  if (toast.message) {
-    const timer = setTimeout(() => {
-      setToast({ message: "", type: "" });
-    }, 3000);
+    if (toast.message) {
+      const timer = setTimeout(() => {
+        setToast({ message: "", type: "" });
+      }, 3000);
 
-    return () => clearTimeout(timer);
-  }
+      return () => clearTimeout(timer);
+    }
   }, [toast]);
 
   const validateForm = () => {
@@ -199,7 +199,7 @@ function ResourceForm({ isOpen, onClose, onSubmit, initialData }) {
     );
   };
 
-    const handleRemoveExistingImage = (imageIdToRemove) => {
+  const handleRemoveExistingImage = (imageIdToRemove) => {
     setExistingImages((prev) =>
       prev.filter((image) => image.id !== imageIdToRemove)
     );
@@ -376,66 +376,68 @@ function ResourceForm({ isOpen, onClose, onSubmit, initialData }) {
                     </p>
                   )}
                 </div>
-                ) : (
-                  <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">
-                        Current Location
-                      </label>
-                      <input
-                        type="text"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleChange}
-                        className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
-                        placeholder="e.g. Lab 1 Storage"
-                      />
-                      {errors.location && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {errors.location}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">
-                        Status
-                      </label>
-                      <select
-                        name="status"
-                        value={formData.status}
-                        onChange={handleChange}
-                        className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
-                      >
-                        <option value="ACTIVE">Active</option>
-                        <option value="UNDER_MAINTENANCE">Under Maintenance</option>
-                        <option value="OUT_OF_SERVICE">Out of Service</option>
-                        <option value="INACTIVE">Inactive</option>
-                        <option value="ARCHIVED">Archived</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">
-                        Quantity
-                      </label>
-                      <input
-                        type="number"
-                        name="capacity"
-                        value={formData.capacity}
-                        onChange={handleChange}
-                        min="0"
-                        className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
-                        placeholder="e.g. 1"
-                      />
-                      {errors.capacity && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {errors.capacity}
-                        </p>
-                      )}
-                    </div>
+              ) : (
+                <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Current Location
+                    </label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                      placeholder="e.g. Lab 1 Storage"
+                    />
+                    {errors.location && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {errors.location}
+                      </p>
+                    )}
                   </div>
-                )}
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Status
+                    </label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="UNDER_MAINTENANCE">
+                        Under Maintenance
+                      </option>
+                      <option value="OUT_OF_SERVICE">Out of Service</option>
+                      <option value="INACTIVE">Inactive</option>
+                      <option value="ARCHIVED">Archived</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      name="capacity"
+                      value={formData.capacity}
+                      onChange={handleChange}
+                      min="0"
+                      className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                      placeholder="e.g. 1"
+                    />
+                    {errors.capacity && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {errors.capacity}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {isFacility ? (
                 <div>
@@ -472,20 +474,42 @@ function ResourceForm({ isOpen, onClose, onSubmit, initialData }) {
               )}
 
               {isFacility && (
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">
-                    Indoor / Outdoor
-                  </label>
-                  <select
-                    name="indoorOutdoor"
-                    value={formData.indoorOutdoor}
-                    onChange={handleChange}
-                    className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
-                  >
-                    <option value="INDOOR">Indoor</option>
-                    <option value="OUTDOOR">Outdoor</option>
-                  </select>
-                </div>
+                <>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Status
+                    </label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="UNDER_MAINTENANCE">
+                        Under Maintenance
+                      </option>
+                      <option value="OUT_OF_SERVICE">Out of Service</option>
+                      <option value="INACTIVE">Inactive</option>
+                      <option value="ARCHIVED">Archived</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Indoor / Outdoor
+                    </label>
+                    <select
+                      name="indoorOutdoor"
+                      value={formData.indoorOutdoor}
+                      onChange={handleChange}
+                      className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
+                    >
+                      <option value="INDOOR">Indoor</option>
+                      <option value="OUTDOOR">Outdoor</option>
+                    </select>
+                  </div>
+                </>
               )}
 
               <div className="md:col-span-2">
