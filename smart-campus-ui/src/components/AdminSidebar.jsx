@@ -8,7 +8,7 @@ import {
   FaUserCog,
   FaBell,
   FaChartBar,
-  
+
 } from "react-icons/fa";
 
 function AdminSidebar() {
@@ -18,7 +18,7 @@ function AdminSidebar() {
     { name: "Dashboard", path: "/admin", icon: <FaTachometerAlt /> },
     { name: "User Management", path: "/admin/users", icon: <FaUsers /> },
     { name: "Facilities & Assets", path: "/admin/resources", icon: <FaBuilding /> },
-    { name: "Booking Management", path: "/admin/bookings", icon: <FaCalendarCheck /> },
+    { name: "Booking Management", path: "/admin/booking-management", icon: <FaCalendarCheck /> },
     { name: "Tickets Management", path: "/admin/tickets", icon: <FaTools /> },
     { name: "Technicians Management", path: "/admin/technicians", icon: <FaUserCog /> },
     { name: "Notifications", path: "/admin/notifications", icon: <FaBell /> },
@@ -29,7 +29,7 @@ function AdminSidebar() {
 
   return (
     <aside className="w-72 min-h-screen bg-[#020817] border-r border-white/10 px-5 py-6 flex flex-col">
-      
+
       {/* Brand */}
       <div className="mb-8">
         <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0A6ED3]/20 to-[#0B1220] p-4 shadow-lg">
@@ -56,18 +56,16 @@ function AdminSidebar() {
             key={item.path}
             to={item.path}
             className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-              ${
-                isActive(item.path)
-                  ? "bg-[#0A6ED3] text-white shadow-md shadow-blue-900/20"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              ${isActive(item.path)
+                ? "bg-[#0A6ED3] text-white shadow-md shadow-blue-900/20"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
           >
             <span
-              className={`text-base transition ${
-                isActive(item.path)
+              className={`text-base transition ${isActive(item.path)
                   ? "text-white"
                   : "text-gray-500 group-hover:text-white"
-              }`}
+                }`}
             >
               {item.icon}
             </span>

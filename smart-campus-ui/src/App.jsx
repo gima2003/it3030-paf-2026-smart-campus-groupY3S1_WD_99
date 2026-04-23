@@ -73,44 +73,44 @@ function App() {
           {/* PUBLIC */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
-          
+
           {/* MFA */}
           <Route path="/verify-2fa" element={<MfaVerify />} />
           <Route path="/mfa-setup" element={<MfaSetup />} />
           <Route path="/features" element={<Features />} />
 
-        {/* ✅ ADD THIS LINE RIGHT HERE */}
-        <Route path="/contact" element={<ContactPage />} />
+          {/* ✅ ADD THIS LINE RIGHT HERE */}
+          <Route path="/contact" element={<ContactPage />} />
 
-      {/* ADMIN */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute allowedRole="ADMIN">
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<AdminDashboard />} />
-        <Route path="tickets" element={<AdminTickets />} />
-        <Route path="technicians" element={<AdminTechnicians />} />
-        <Route path="/admin/resources" element={<ResourceManagement />} />
-      </Route>
+          {/* ADMIN */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="tickets" element={<AdminTickets />} />
+            <Route path="technicians" element={<AdminTechnicians />} />
+            <Route path="/admin/resources" element={<ResourceManagement />} />
+          </Route>
 
-      {/* STUDENT */}
-      <Route
-        path="/student"
-        element={
-          <ProtectedRoute allowedRole="STUDENT">
-            <StudentLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<StudentDashboard />} />
-        <Route path="tickets" element={<StudentTickets />} />
-      </Route>
+          {/* STUDENT */}
+          <Route
+            path="/student"
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<StudentDashboard />} />
+            <Route path="tickets" element={<StudentTickets />} />
+          </Route>
 
-      {/* 🔥 FALLBACK (IMPORTANT) */}
+          {/* 🔥 FALLBACK (IMPORTANT) */}
           <Route
             path="/admin"
             element={
@@ -124,9 +124,10 @@ function App() {
             <Route path="technicians" element={<AdminTechnicians />} />
             <Route path="users" element={<AdminUserManagement />} />
             <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="booking-management" element={<AdminBookingManagement />} />
           </Route>
 
-           {/* LECTURER */}
+          {/* LECTURER */}
           <Route
             path="/lecturer"
             element={
