@@ -31,7 +31,7 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
       icon: Building2,
     },
     {
-      path: "/admin/bookings",
+      path: "/admin/booking-management",
       label: "Booking Management",
       icon: CalendarCheck,
     },
@@ -57,7 +57,8 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
     },
   ];
 
-  const isActivePath = (path) => location.pathname === path;
+  const isActivePath = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
     <aside
@@ -105,7 +106,7 @@ function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
               className={`group flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${
                 active
                   ? "bg-[#0A6ED3] text-white"
-                  : "text-gray-400 hover:bg-[#0B1220] hover:text-white"
+                  : "text-gray-300 hover:bg-[#0B1220] hover:text-white"
               }`}
               title={!isSidebarOpen ? item.label : ""}
             >

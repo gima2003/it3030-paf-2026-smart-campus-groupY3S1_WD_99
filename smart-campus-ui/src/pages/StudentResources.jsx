@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Search,
@@ -137,12 +138,9 @@ function FilterSelect({ value, onChange, options, icon: Icon }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`
-          w-full appearance-none rounded-xl bg-[#001233]/80 border border-white/8
-          ${Icon ? "pl-9" : "pl-4"} pr-8 py-2.5 text-sm text-white/90
-          outline-none focus:border-[#0A6ED3]/60 focus:ring-2 focus:ring-[#0A6ED3]/10
-          transition-all cursor-pointer hover:border-white/15
-        `}
+        className={`w-full appearance-none rounded-xl bg-[#001233]/80 border border-white/8 ${
+          Icon ? "pl-9" : "pl-4"
+        } pr-8 py-2.5 text-sm text-white/90 outline-none focus:border-[#0A6ED3]/60 focus:ring-2 focus:ring-[#0A6ED3]/10 transition-all cursor-pointer hover:border-white/15`}
         style={{ backgroundImage: "none" }}
       >
         {options.map((option) => (
@@ -192,7 +190,7 @@ function SkeletonCard() {
   );
 }
 
-function ResourceCard({ resource, onViewDetails }) {
+function ResourceCard({ resource, onViewDetails, onBookNow }) {
   const isFacility = resource.category === "FACILITY";
 
   return (
@@ -224,10 +222,7 @@ function ResourceCard({ resource, onViewDetails }) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#001233]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-          <span
-            className="px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-wide
-            bg-[#0A6ED3]/80 text-white backdrop-blur-sm"
-          >
+          <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-wide bg-[#0A6ED3]/80 text-white backdrop-blur-sm">
             {isFacility ? "Facility" : "Equipment"}
           </span>
 
@@ -279,15 +274,29 @@ function ResourceCard({ resource, onViewDetails }) {
           {resource.description || "No description available."}
         </p>
 
-        <button
-          onClick={() => onViewDetails(resource)}
-          className="w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-            bg-[#0A6ED3]/15 text-[#6CB6FF] border border-[#0A6ED3]/25
-            hover:bg-[#0A6ED3] hover:text-white hover:border-[#0A6ED3]
-            active:scale-[0.98]"
-        >
-          View Details
-        </button>
+        <div className="flex gap-3 mt-auto">
+          <button
+            onClick={() => onBookNow(resource)}
+            disabled={
+              resource.category !== "FACILITY" ||
+              resource.isBookable === false ||
+              resource.status === "OUT_OF_SERVICE"
+            }
+            className="flex-1 bg-[#0A6ED3] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl font-medium transition"
+          >
+            Book Now
+          </button>
+
+          <button
+            onClick={() => onViewDetails(resource)}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+              bg-[#0A6ED3]/15 text-[#6CB6FF] border border-[#0A6ED3]/25
+              hover:bg-[#0A6ED3] hover:text-white hover:border-[#0A6ED3]
+              active:scale-[0.98]"
+          >
+            View
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -302,7 +311,22 @@ function MetaRow({ icon: Icon, text }) {
   );
 }
 
+function StatChip({ icon: Icon, label, count }) {
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/8 text-xs"
+      style={{ background: "rgba(0, 18, 51, 0.6)" }}
+    >
+      <Icon size={12} className="text-[#6CB6FF]/60" />
+      <span className="text-white/40">{label}</span>
+      <span className="text-white/70 font-medium">{count}</span>
+    </div>
+  );
+}
+
 function StudentResources() {
+  const navigate = useNavigate();
+
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -346,6 +370,7 @@ function StudentResources() {
   const filteredResources = useMemo(() => {
     return resources.filter((resource) => {
       const q = searchText.toLowerCase();
+
       const matchesSearch =
         resource.name?.toLowerCase().includes(q) ||
         resource.code?.toLowerCase().includes(q) ||
@@ -393,6 +418,12 @@ function StudentResources() {
     setSelectedFacilityId(null);
   };
 
+  const handleBookNow = (resource) => {
+    navigate("/student/bookings/new", {
+      state: { resourceId: resource.id },
+    });
+  };
+
   return (
     <div className="min-h-screen text-white" style={{ background: "#000919" }}>
       <div
@@ -422,7 +453,7 @@ function StudentResources() {
                 Browse Resources
               </h1>
               <p className="text-sm text-white/40 mt-1.5 max-w-md">
-                Explore available facilities and equipment across the campus
+                Explore available facilities and equipment across the campus.
               </p>
             </div>
 
@@ -556,6 +587,7 @@ function StudentResources() {
                   key={`${resource.category}-${resource.id}`}
                   resource={resource}
                   onViewDetails={handleOpenDetails}
+                  onBookNow={handleBookNow}
                 />
               ))}
             </div>
@@ -568,19 +600,6 @@ function StudentResources() {
           facilityId={selectedFacilityId}
         />
       </div>
-    </div>
-  );
-}
-
-function StatChip({ icon: Icon, label, count }) {
-  return (
-    <div
-      className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/8 text-xs"
-      style={{ background: "rgba(0, 18, 51, 0.6)" }}
-    >
-      <Icon size={12} className="text-[#6CB6FF]/60" />
-      <span className="text-white/40">{label}</span>
-      <span className="text-white/70 font-medium">{count}</span>
     </div>
   );
 }

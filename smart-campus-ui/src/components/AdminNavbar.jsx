@@ -4,7 +4,7 @@ import { FaBell, FaUserCircle } from "react-icons/fa";
 import ProfileModal from "./ProfileModal";
 
 function AdminNavbar() {
-  const { user, setUser, logout, fetchUser } = useContext(AuthContext);
+  const { user, setUser, logout } = useContext(AuthContext);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -15,19 +15,19 @@ function AdminNavbar() {
   return (
     <>
       <div className="h-16 bg-[#000919] border-b border-white/10 px-6 flex justify-between items-center relative z-40">
-
-        {/* Title */}
+        {/* Left Title */}
         <h3 className="text-lg font-semibold text-white">
           Admin Dashboard
         </h3>
 
         {/* Right Side */}
         <div className="flex items-center gap-6">
-
           {/* User Info */}
           {user && (
             <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-medium text-white">{user.firstName} {user.lastName}</span>
+              <span className="text-sm font-medium text-white">
+                {user.firstName} {user.lastName}
+              </span>
               <span className="text-xs text-gray-400">Admin</span>
             </div>
           )}
@@ -48,7 +48,6 @@ function AdminNavbar() {
           >
             Logout
           </button>
-
         </div>
       </div>
 
