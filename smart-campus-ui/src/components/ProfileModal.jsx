@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { updateProfile } from "../services/userService";
 import { useToast } from "../context/ToastContext";
+import { validateName, validatePhone, validateCity, validateRequired } from "../utils/validation";
 
 function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({});
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (user && isOpen) {
@@ -24,12 +26,67 @@ function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
 
   if (!isOpen || !user) return null;
 
+  const validateField = (name, value) => {
+    let error = "";
+    switch (name) {
+      case "firstName":
+      case "lastName":
+        error = validateName(value);
+        break;
+      case "phone":
+        error = validatePhone(value);
+        break;
+      case "city":
+        error = validateCity(value);
+        break;
+      case "batchYear":
+      case "designation":
+      case "specialization":
+      case "officeLocation":
+        error = validateRequired(value);
+        break;
+      default:
+        break;
+    }
+    setErrors((prev) => ({ ...prev, [name]: error }));
+    return error === "";
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    const check = (name, value) => {
+      if (!validateField(name, value)) isValid = false;
+    };
+
+    check("firstName", formData.firstName);
+    check("lastName", formData.lastName);
+    check("phone", formData.phone);
+    check("city", formData.city);
+
+    if (user.role === "STUDENT") check("batchYear", formData.batchYear);
+    if (user.role === "LECTURER") {
+      check("designation", formData.designation);
+      check("specialization", formData.specialization);
+    }
+    if (user.role === "TECHNICIAN") check("specialization", formData.specialization);
+    if (user.role === "MANAGER") check("officeLocation", formData.officeLocation);
+
+    return isValid;
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      showToast("Please fix the errors before submitting", "error");
+      return;
+    }
+
     setLoading(true);
     
     // Clean up empty strings
@@ -128,32 +185,37 @@ function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
               
               <div>
                 <label className="block text-sm text-gray-300 mb-1">First Name</label>
-                <input required name="firstName" value={formData.firstName} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                <input required name="firstName" value={formData.firstName} onChange={handleChange} onBlur={(e) => validateField("firstName", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                {errors.firstName && <p className="text-red-400 text-xs mt-1">{errors.firstName}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Last Name</label>
-                <input required name="lastName" value={formData.lastName} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                <input required name="lastName" value={formData.lastName} onChange={handleChange} onBlur={(e) => validateField("lastName", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                {errors.lastName && <p className="text-red-400 text-xs mt-1">{errors.lastName}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Phone</label>
-                <input required name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                <input required name="phone" value={formData.phone} onChange={handleChange} onBlur={(e) => validateField("phone", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">City</label>
-                <input required name="city" value={formData.city} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                <input required name="city" value={formData.city} onChange={handleChange} onBlur={(e) => validateField("city", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                {errors.city && <p className="text-red-400 text-xs mt-1">{errors.city}</p>}
               </div>
 
               {/* Editable Role Specifics */}
               {user.role === "STUDENT" && (
                 <div>
                   <label className="block text-sm text-gray-300 mb-1">Batch Year</label>
-                  <select required name="batchYear" value={formData.batchYear} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
+                  <select required name="batchYear" value={formData.batchYear} onChange={handleChange} onBlur={(e) => validateField("batchYear", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
                     <option value="">Select Batch Year</option>
                     <option value="Y1">Y1</option>
                     <option value="Y2">Y2</option>
                     <option value="Y3">Y3</option>
                     <option value="Y4">Y4</option>
                   </select>
+                  {errors.batchYear && <p className="text-red-400 text-xs mt-1">{errors.batchYear}</p>}
                 </div>
               )}
 
@@ -161,16 +223,18 @@ function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
                 <>
                   <div>
                     <label className="block text-sm text-gray-300 mb-1">Designation</label>
-                    <select required name="designation" value={formData.designation} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
+                    <select required name="designation" value={formData.designation} onChange={handleChange} onBlur={(e) => validateField("designation", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
                       <option value="">Select Designation</option>
                       <option value="ASSISTANT_LECTURER">Assistant Lecturer</option>
                       <option value="SENIOR_LECTURER">Senior Lecturer</option>
                       <option value="LAB_ASSISTANT">Lab Assistant</option>
                     </select>
+                    {errors.designation && <p className="text-red-400 text-xs mt-1">{errors.designation}</p>}
                   </div>
                   <div>
                     <label className="block text-sm text-gray-300 mb-1">Specialization</label>
-                    <input required name="specialization" value={formData.specialization} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                    <input required name="specialization" value={formData.specialization} onChange={handleChange} onBlur={(e) => validateField("specialization", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                    {errors.specialization && <p className="text-red-400 text-xs mt-1">{errors.specialization}</p>}
                   </div>
                 </>
               )}
@@ -178,14 +242,16 @@ function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
               {user.role === "TECHNICIAN" && (
                 <div>
                   <label className="block text-sm text-gray-300 mb-1">Specialization</label>
-                  <input required name="specialization" value={formData.specialization} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  <input required name="specialization" value={formData.specialization} onChange={handleChange} onBlur={(e) => validateField("specialization", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  {errors.specialization && <p className="text-red-400 text-xs mt-1">{errors.specialization}</p>}
                 </div>
               )}
 
               {user.role === "MANAGER" && (
                 <div>
                   <label className="block text-sm text-gray-300 mb-1">Office Location</label>
-                  <input required name="officeLocation" value={formData.officeLocation} onChange={handleChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  <input required name="officeLocation" value={formData.officeLocation} onChange={handleChange} onBlur={(e) => validateField("officeLocation", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  {errors.officeLocation && <p className="text-red-400 text-xs mt-1">{errors.officeLocation}</p>}
                 </div>
               )}
 

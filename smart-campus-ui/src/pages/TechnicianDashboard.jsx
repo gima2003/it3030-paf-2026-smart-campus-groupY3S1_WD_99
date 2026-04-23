@@ -228,11 +228,10 @@ function TechnicianDashboard() {
               <div
                 key={ticket.id}
                 onClick={() => handleSelectTicket(ticket)}
-                className={`p-4 bg-[#000919] border rounded-xl flex justify-between cursor-pointer transition ${
-                  selectedTicketId === ticket.id
+                className={`p-4 bg-[#000919] border rounded-xl flex justify-between cursor-pointer transition ${selectedTicketId === ticket.id
                     ? "border-[#0A6ED3]"
                     : "border-white/10 hover:bg-white/10"
-                }`}
+                  }`}
               >
                 <div>
                   <h4 className="text-white font-medium">{ticket.title}</h4>
