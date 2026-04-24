@@ -194,10 +194,9 @@ function ResourceCard({ resource, onViewDetails, onBookNow }) {
   const isFacility = resource.category === "FACILITY";
 
   return (
-    <div
-      className="group relative bg-[#001233]/60 border border-white/8 rounded-2xl overflow-hidden
-        hover:border-[#0A6ED3]/40 transition-all duration-300 h-full flex flex-col
-        hover:shadow-[0_0_30px_-8px_rgba(10,110,211,0.25)] hover:-translate-y-0.5"
+    <div className="group relative bg-[#001233]/60 border border-white/8 rounded-2xl overflow-hidden
+      hover:border-[#0A6ED3]/40 transition-all duration-300 h-full flex flex-col
+      hover:shadow-[0_0_30px_-8px_rgba(10,110,211,0.25)] hover:-translate-y-0.5"
     >
       <div className="relative h-48 bg-[#000919] overflow-hidden flex-shrink-0">
         {resource.imageUrl ? (
@@ -226,16 +225,8 @@ function ResourceCard({ resource, onViewDetails, onBookNow }) {
             {isFacility ? "Facility" : "Equipment"}
           </span>
 
-          <span
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium backdrop-blur-sm flex items-center gap-1.5 ${getStatusClass(
-              resource.status
-            )}`}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${getStatusDot(
-                resource.status
-              )}`}
-            />
+          <span className={`px-2.5 py-1 rounded-lg text-[11px] font-medium backdrop-blur-sm flex items-center gap-1.5 ${getStatusClass(resource.status)}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${getStatusDot(resource.status)}`} />
             {formatEnum(resource.status)}
           </span>
         </div>
@@ -246,28 +237,15 @@ function ResourceCard({ resource, onViewDetails, onBookNow }) {
           <h3 className="text-[15px] font-semibold text-white leading-snug line-clamp-1 group-hover:text-[#6CB6FF] transition-colors duration-200">
             {resource.name}
           </h3>
-          {resource.code && (
-            <span className="text-[11px] text-white/30 font-mono mt-0.5 block">
-              {resource.code}
-            </span>
-          )}
         </div>
 
         <div className="space-y-2 mb-4">
-          <MetaRow
-            icon={isFacility ? Building2 : Wrench}
-            text={formatEnum(resource.type)}
-          />
+          <MetaRow icon={isFacility ? Building2 : Wrench} text={formatEnum(resource.type)} />
           <MetaRow icon={MapPin} text={resource.location || "N/A"} />
           <MetaRow
             icon={isFacility ? Users : Package}
-            text={`${isFacility ? "Capacity" : "Quantity"}: ${
-              resource.capacity ?? 0
-            }`}
+            text={`${isFacility ? "Capacity" : "Quantity"}: ${resource.capacity ?? 0}`}
           />
-          {isFacility && resource.indoorOutdoor && (
-            <MetaRow icon={Filter} text={formatEnum(resource.indoorOutdoor)} />
-          )}
         </div>
 
         <p className="text-[13px] text-white/35 line-clamp-2 flex-1 leading-relaxed mb-4">
@@ -275,12 +253,12 @@ function ResourceCard({ resource, onViewDetails, onBookNow }) {
         </p>
 
         <div className="flex gap-3 mt-auto">
+          {/* 🔥 FIXED BUTTON */}
           <button
             onClick={() => onBookNow(resource)}
             disabled={
-              resource.category !== "FACILITY" ||
-              resource.isBookable === false ||
-              resource.status === "OUT_OF_SERVICE"
+              !resource.isBookable ||
+              ["OUT_OF_SERVICE", "UNDER_MAINTENANCE"].includes(resource.status)
             }
             className="flex-1 bg-[#0A6ED3] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl font-medium transition"
           >
@@ -291,8 +269,7 @@ function ResourceCard({ resource, onViewDetails, onBookNow }) {
             onClick={() => onViewDetails(resource)}
             className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
               bg-[#0A6ED3]/15 text-[#6CB6FF] border border-[#0A6ED3]/25
-              hover:bg-[#0A6ED3] hover:text-white hover:border-[#0A6ED3]
-              active:scale-[0.98]"
+              hover:bg-[#0A6ED3] hover:text-white hover:border-[#0A6ED3]"
           >
             View
           </button>
@@ -420,7 +397,10 @@ function StudentResources() {
 
   const handleBookNow = (resource) => {
     navigate("/student/bookings/new", {
-      state: { resourceId: resource.id },
+      state: {
+        resourceId: resource.id,
+        resourceType: resource.category,
+      },
     });
   };
 

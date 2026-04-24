@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createBooking, checkBookingAvailability } from "../services/bookingService";
 import { getFacilities } from "../services/facilityService";
-import { AuthContext } from "../context/AuthContext";
-import { useContext } from "react";
+import { getEquipment } from "../services/equipmentService";
+import Swal from "sweetalert2";
 
 function StudentBookingForm() {
   const location = useLocation();
@@ -13,15 +13,16 @@ function StudentBookingForm() {
   // 1. Book Now from resources page
   // 2. Book Again from bookings page
   const selectedResourceId = location.state?.resourceId || "";
+  const selectedResourceType = location.state?.resourceType || "FACILITY";
   const bookingData = location.state?.bookingData || null;
-  const { user } = useContext(AuthContext);
 
-  const [facilities, setFacilities] = useState([]);
-  const [loadingFacilities, setLoadingFacilities] = useState(true);
+  const [resources, setResources] = useState([]);
+  const [loadingResources, setLoadingResources] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     userId: "",
+    resourceType: "FACILITY",
     resourceId: "",
     date: "",
     startTime: "",
@@ -37,12 +38,14 @@ function StudentBookingForm() {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   useEffect(() => {
-    fetchFacilities();
+    fetchResources();
 
-    const storedUserId = user?.id || localStorage.getItem("userId") || "1";
+    const storedUserId = localStorage.getItem("userId") || "1";
 
     setFormData({
       userId: storedUserId,
+      resourceType:
+        bookingData?.resourceType || selectedResourceType || "FACILITY",
       resourceId: bookingData?.resourceId || selectedResourceId || "",
       date: bookingData?.date || "",
       startTime: bookingData?.startTime || "",
@@ -50,7 +53,7 @@ function StudentBookingForm() {
       purpose: bookingData?.purpose || "",
       attendees: bookingData?.attendees || "",
     });
-  }, [selectedResourceId, bookingData]);
+  }, [selectedResourceId, selectedResourceType, bookingData]);
 
   useEffect(() => {
     const shouldCheck =
@@ -78,8 +81,15 @@ function StudentBookingForm() {
         setCheckingAvailability(true);
 
         const payload = {
-          resourceType: "FACILITY",
-          facilityId: Number(formData.resourceId),
+          resourceType: formData.resourceType,
+          facilityId:
+            formData.resourceType === "FACILITY"
+              ? Number(formData.resourceId)
+              : null,
+          equipmentId:
+            formData.resourceType === "EQUIPMENT"
+              ? Number(formData.resourceId)
+              : null,
           bookingDate: formData.date,
           startTime: `${formData.startTime}:00`,
           endTime: `${formData.endTime}:00`,
@@ -104,21 +114,45 @@ function StudentBookingForm() {
     }, 400);
 
     return () => clearTimeout(timeoutId);
-  }, [formData.resourceId, formData.date, formData.startTime, formData.endTime]);
+  }, [
+    formData.resourceType,
+    formData.resourceId,
+    formData.date,
+    formData.startTime,
+    formData.endTime,
+  ]);
 
-  const fetchFacilities = async () => {
+  const fetchResources = async () => {
     try {
-      setLoadingFacilities(true);
-      const data = await getFacilities();
-      const activeFacilities = Array.isArray(data) 
-        ? data.filter(f => f.status === "ACTIVE" && f.active !== false)
-        : [];
-      setFacilities(activeFacilities);
+      setLoadingResources(true);
+
+      const [facilityData, equipmentData] = await Promise.all([
+        getFacilities(),
+        getEquipment(),
+      ]);
+
+      const normalizedFacilities = (
+        Array.isArray(facilityData) ? facilityData : []
+      ).map((facility) => ({
+        id: facility.id,
+        name: facility.name,
+        type: "FACILITY",
+      }));
+
+      const normalizedEquipment = (
+        Array.isArray(equipmentData) ? equipmentData : []
+      ).map((equipment) => ({
+        id: equipment.id,
+        name: equipment.name,
+        type: "EQUIPMENT",
+      }));
+
+      setResources([...normalizedFacilities, ...normalizedEquipment]);
     } catch (error) {
-      console.error("Error loading facilities:", error);
-      setErrorMessage("Failed to load facilities.");
+      console.error("Error loading resources:", error);
+      setErrorMessage("Failed to load resources.");
     } finally {
-      setLoadingFacilities(false);
+      setLoadingResources(false);
     }
   };
 
@@ -131,6 +165,7 @@ function StudentBookingForm() {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+      ...(name === "resourceType" ? { resourceId: "" } : {}),
     }));
   };
 
@@ -146,7 +181,11 @@ function StudentBookingForm() {
   };
 
   const validateForm = () => {
-    if (!formData.resourceId) return "Please select a facility.";
+    if (!formData.resourceId) {
+      return `Please select a ${
+        formData.resourceType === "EQUIPMENT" ? "equipment" : "facility"
+      }.`;
+    }
     if (!formData.date) return "Please select a booking date.";
     if (!formData.startTime) return "Please select a start time.";
     if (!formData.endTime) return "Please select an end time.";
@@ -177,8 +216,15 @@ function StudentBookingForm() {
 
     const payload = {
       userId: Number(formData.userId),
-      resourceType: "FACILITY",
-      facilityId: Number(formData.resourceId),
+      resourceType: formData.resourceType,
+      facilityId:
+        formData.resourceType === "FACILITY"
+          ? Number(formData.resourceId)
+          : null,
+      equipmentId:
+        formData.resourceType === "EQUIPMENT"
+          ? Number(formData.resourceId)
+          : null,
       bookingDate: formData.date,
       startTime: `${formData.startTime}:00`,
       endTime: `${formData.endTime}:00`,
@@ -190,18 +236,35 @@ function StudentBookingForm() {
       setSubmitting(true);
       await createBooking(payload);
 
-      setSuccessMessage("Booking request submitted successfully.");
+        await Swal.fire({
+          title: "Booking Successful",
+          text: "Your booking request has been submitted successfully.",
+          icon: "success",
+          confirmButtonText: "Go to My Bookings",
 
-      setTimeout(() => {
+          background: "#081225",
+          color: "#ffffff",
+          confirmButtonColor: "#0A6ED3",
+
+          iconColor: "#22c55e",
+          customClass: {
+            popup: "rounded-2xl border border-white/10 shadow-2xl",
+            title: "text-white font-semibold",
+            htmlContainer: "text-gray-300",
+            confirmButton: "rounded-xl px-6 py-3 font-semibold",
+          },
+        });
+
         navigate("/student/bookings");
-      }, 1200);
     } catch (error) {
       console.error("Booking creation failed:", error);
 
       const backendMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
-        (typeof error?.response?.data === "string" ? error.response.data : null) ||
+        (typeof error?.response?.data === "string"
+          ? error.response.data
+          : null) ||
         "Failed to submit booking request.";
 
       setErrorMessage(
@@ -221,6 +284,8 @@ function StudentBookingForm() {
 
     setFormData((prev) => ({
       ...prev,
+      resourceType:
+        bookingData?.resourceType || selectedResourceType || "FACILITY",
       resourceId: bookingData?.resourceId || selectedResourceId || "",
       date: bookingData?.date || "",
       startTime: bookingData?.startTime || "",
@@ -236,7 +301,7 @@ function StudentBookingForm() {
         <div className="mb-8">
           <h2 className="text-3xl font-semibold mb-2">Create Booking Request</h2>
           <p className="text-gray-400">
-            Fill in the details to request a booking for a campus facility.
+            Fill in the details to request a booking for a campus resource.
           </p>
         </div>
 
@@ -250,7 +315,11 @@ function StudentBookingForm() {
 
           <div className="bg-[#081225] p-5 rounded-2xl border border-white/10">
             <p className="text-gray-400 text-sm">Request Type</p>
-            <h3 className="text-lg font-semibold mt-2">Facility Booking</h3>
+            <h3 className="text-lg font-semibold mt-2">
+              {formData.resourceType === "EQUIPMENT"
+                ? "Equipment Booking"
+                : "Facility Booking"}
+            </h3>
           </div>
 
           <div className="bg-[#081225] p-5 rounded-2xl border border-white/10">
@@ -263,14 +332,19 @@ function StudentBookingForm() {
           <div className="bg-[#081225] p-6 rounded-2xl border border-white/10 h-fit">
             <h3 className="text-xl font-semibold mb-4">Instructions</h3>
             <div className="space-y-3 text-sm text-gray-400">
-              <p>• Select a facility from the list.</p>
+              <p>
+                • Select a{" "}
+                {formData.resourceType === "EQUIPMENT" ? "equipment" : "facility"}{" "}
+                from the list.
+              </p>
               <p>• Choose a valid booking date and time range.</p>
               <p>• Add a clear booking purpose.</p>
               <p>• Enter expected attendees where applicable.</p>
               <p>• Your request will be reviewed by admin.</p>
               {bookingData && (
                 <p className="text-yellow-300">
-                  • Rebooking previous request. Review and update details before submitting.
+                  • Rebooking previous request. Review and update details before
+                  submitting.
                 </p>
               )}
             </div>
@@ -299,23 +373,47 @@ function StudentBookingForm() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-300">
-                  Facility
+                  Resource Type
+                </label>
+                <select
+                  name="resourceType"
+                  value={formData.resourceType}
+                  onChange={handleChange}
+                  className="w-full bg-[#0b1730] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#0A6ED3]"
+                >
+                  <option value="FACILITY">Facility</option>
+                  <option value="EQUIPMENT">Equipment</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-300">
+                  {formData.resourceType === "EQUIPMENT" ? "Equipment" : "Facility"}
                 </label>
                 <select
                   name="resourceId"
                   value={formData.resourceId}
                   onChange={handleChange}
-                  disabled={loadingFacilities}
+                  disabled={loadingResources}
                   className="w-full bg-[#0b1730] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#0A6ED3]"
                 >
                   <option value="">
-                    {loadingFacilities ? "Loading facilities..." : "Select facility"}
+                    {loadingResources
+                      ? "Loading resources..."
+                      : formData.resourceType === "EQUIPMENT"
+                      ? "Select equipment"
+                      : "Select facility"}
                   </option>
-                  {facilities.map((facility) => (
-                    <option key={facility.id} value={facility.id}>
-                      {facility.name}
-                    </option>
-                  ))}
+                  {resources
+                    .filter((resource) => resource.type === formData.resourceType)
+                    .map((resource) => (
+                      <option
+                        key={`${resource.type}-${resource.id}`}
+                        value={resource.id}
+                      >
+                        {resource.name}
+                      </option>
+                    ))}
                 </select>
               </div>
 

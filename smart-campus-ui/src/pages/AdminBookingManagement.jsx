@@ -18,7 +18,6 @@ function AdminBookingManagement() {
 
   const [processingId, setProcessingId] = useState(null);
 
-  // Reject modal state
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -75,8 +74,8 @@ function AdminBookingManagement() {
       showCancelButton: true,
       confirmButtonText: "Yes, approve",
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#16a34a",
-      cancelButtonColor: "#3b82f6",
+      confirmButtonColor: "#0A6ED3",
+      cancelButtonColor: "#64748b",
     });
 
     if (!result.isConfirmed) return;
@@ -171,7 +170,7 @@ function AdminBookingManagement() {
       confirmButtonText: "Yes, cancel",
       cancelButtonText: "Keep booking",
       confirmButtonColor: "#f97316",
-      cancelButtonColor: "#3b82f6",
+      cancelButtonColor: "#64748b",
     });
 
     if (!result.isConfirmed) return;
@@ -207,7 +206,9 @@ function AdminBookingManagement() {
   };
 
   const getStatusBadge = (status) => {
-    const base = "px-3 py-1 rounded-full text-xs font-semibold border";
+    const base =
+      "inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold border min-w-[92px]";
+
     switch (status) {
       case "APPROVED":
         return `${base} bg-green-500/10 text-green-300 border-green-500/30`;
@@ -235,7 +236,7 @@ function AdminBookingManagement() {
     <div className="text-white">
       <div className="mb-8">
         <h2 className="text-3xl font-semibold mb-2">Booking Management</h2>
-        <p className="text-gray-400">
+        <p className="text-gray-400 text-base">
           Review, approve, reject, and manage student booking requests.
         </p>
       </div>
@@ -273,7 +274,7 @@ function AdminBookingManagement() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#0b1730] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#0A6ED3]"
+            className="bg-[#0b1730] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#0A6ED3]"
           >
             <option value="ALL">All Statuses</option>
             <option value="PENDING">Pending</option>
@@ -286,7 +287,7 @@ function AdminBookingManagement() {
             type="date"
             value={searchDate}
             onChange={(e) => setSearchDate(e.target.value)}
-            className="bg-[#0b1730] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#0A6ED3]"
+            className="bg-[#0b1730] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#0A6ED3]"
           />
 
           <button
@@ -294,7 +295,7 @@ function AdminBookingManagement() {
               setStatusFilter("ALL");
               setSearchDate("");
             }}
-            className="border border-white/10 hover:bg-white/5 text-white rounded-xl px-4 py-3 transition"
+            className="border border-white/10 hover:bg-white/5 text-white rounded-xl px-4 py-3 text-sm transition"
           >
             Reset Filters
           </button>
@@ -302,58 +303,64 @@ function AdminBookingManagement() {
       </div>
 
       {message && (
-        <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-blue-300">
+        <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-300">
           {message}
         </div>
       )}
 
-      <div className="bg-[#081225] p-6 rounded-2xl border border-white/10 overflow-x-auto">
+      <div className="bg-[#081225] p-5 rounded-2xl border border-white/10 overflow-x-auto">
         {loading ? (
-          <p className="text-gray-400">Loading bookings...</p>
+          <p className="text-gray-400 text-sm">Loading bookings...</p>
         ) : filteredBookings.length === 0 ? (
-          <p className="text-gray-400">No bookings found.</p>
+          <p className="text-gray-400 text-sm">No bookings found.</p>
         ) : (
-          <table className="w-full text-left min-w-[1100px]">
+          <table className="w-full text-left min-w-[1120px] text-sm">
             <thead>
               <tr className="text-gray-400 border-b border-white/10">
-                <th className="py-3 px-3">User</th>
-                <th className="py-3 px-3">Facility</th>
-                <th className="py-3 px-3">Date</th>
-                <th className="py-3 px-3">Time</th>
-                <th className="py-3 px-3">Purpose</th>
-                <th className="py-3 px-3">Attendees</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3">Reason</th>
-                <th className="py-3 px-3">Actions</th>
+                <th className="py-3 px-3 font-semibold">User</th>
+                <th className="py-3 px-3 font-semibold">Resource</th>
+                <th className="py-3 px-3 font-semibold">Date</th>
+                <th className="py-3 px-3 font-semibold">Time</th>
+                <th className="py-3 px-3 font-semibold">Purpose</th>
+                <th className="py-3 px-3 font-semibold">Attendees</th>
+                <th className="py-3 px-3 font-semibold">Status</th>
+                <th className="py-3 px-3 font-semibold">Reason</th>
+                <th className="py-3 px-3 font-semibold text-center">Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {filteredBookings.map((booking) => (
-                <tr key={booking.id} className="border-b border-white/5">
-                  <td className="py-4 px-3">
+                <tr
+                  key={booking.id}
+                  className="border-b border-white/5 hover:bg-white/[0.025] transition"
+                >
+                  <td className="py-4 px-3 text-gray-100">
                     {booking.userName || booking.userId}
                   </td>
 
-                  <td className="py-4 px-3 font-medium">
+                  <td className="py-4 px-3 font-semibold text-white">
                     {booking.resourceName ||
                       booking.facilityName ||
+                      booking.equipmentName ||
                       booking.resourceId}
                   </td>
 
-                  <td className="py-4 px-3">
+                  <td className="py-4 px-3 text-gray-200 whitespace-nowrap">
                     {booking.date || booking.bookingDate}
                   </td>
 
-                  <td className="py-4 px-3">
+                  <td className="py-4 px-3 text-gray-200 whitespace-nowrap">
                     {booking.startTime} - {booking.endTime}
                   </td>
 
-                  <td className="py-4 px-3 max-w-[220px] truncate">
+                  <td className="py-4 px-3 max-w-[200px] truncate text-gray-200">
                     {booking.purpose}
                   </td>
 
-                  <td className="py-4 px-3">{booking.attendees}</td>
+                  <td className="py-4 px-3 text-gray-200">
+                    {booking.attendees}
+                  </td>
 
                   <td className="py-4 px-3">
                     <span className={getStatusBadge(booking.status)}>
@@ -361,42 +368,58 @@ function AdminBookingManagement() {
                     </span>
                   </td>
 
-                  <td className="py-4 px-3 text-gray-400">
-                    {booking.reason || booking.adminReason || "-"}
+                  <td className="py-4 px-3 text-gray-400 max-w-[190px]">
+                    <span className="line-clamp-2">
+                      {booking.reason || booking.adminReason || "-"}
+                    </span>
                   </td>
 
                   <td className="py-4 px-3">
-                    {booking.status === "PENDING" ? (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(booking.id)}
-                          disabled={processingId === booking.id}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm disabled:opacity-60"
-                        >
-                          {processingId === booking.id ? "..." : "Approve"}
-                        </button>
+                    <div className="flex justify-center">
+                      {booking.status === "PENDING" ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleApprove(booking.id)}
+                            disabled={processingId === booking.id}
+                            className="min-w-[92px] px-3 py-2 text-[13px] font-semibold rounded-xl
+                              bg-transparent text-green-300 border border-green-500/40
+                              hover:bg-green-500/10 hover:border-green-400 hover:text-green-200
+                              active:scale-[0.98] transition
+                              disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {processingId === booking.id ? "..." : "Approve"}
+                          </button>
 
+                          <button
+                            onClick={() => openRejectModal(booking.id)}
+                            disabled={processingId === booking.id}
+                            className="min-w-[82px] px-3 py-2 text-[13px] font-semibold rounded-xl
+                              bg-transparent text-red-300 border border-red-500/40
+                              hover:bg-red-500/10 hover:border-red-400 hover:text-red-200
+                              active:scale-[0.98] transition
+                              disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {processingId === booking.id ? "..." : "Reject"}
+                          </button>
+                        </div>
+                      ) : booking.status === "APPROVED" ? (
                         <button
-                          onClick={() => openRejectModal(booking.id)}
+                          onClick={() => handleCancel(booking.id)}
                           disabled={processingId === booking.id}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm disabled:opacity-60"
+                          className="min-w-[82px] px-3 py-2 text-[13px] font-semibold rounded-xl
+                            bg-transparent text-orange-300 border border-orange-500/45
+                            hover:bg-orange-500/10 hover:border-orange-400 hover:text-orange-200
+                            active:scale-[0.98] transition
+                            disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {processingId === booking.id ? "..." : "Reject"}
+                          {processingId === booking.id ? "..." : "Cancel"}
                         </button>
-                      </div>
-                    ) : booking.status === "APPROVED" ? (
-                      <button
-                        onClick={() => handleCancel(booking.id)}
-                        disabled={processingId === booking.id}
-                        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm disabled:opacity-60"
-                      >
-                        {processingId === booking.id ? "..." : "Cancel"}
-                      </button>
-                    ) : (
-                      <span className="inline-flex items-center rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-400">
-                        No actions
-                      </span>
-                    )}
+                      ) : (
+                        <span className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-gray-500 min-w-[96px]">
+                          No actions
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -408,10 +431,10 @@ function AdminBookingManagement() {
       {showRejectModal && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4">
           <div className="w-full max-w-lg bg-[#081225] border border-white/10 rounded-2xl p-6 shadow-2xl">
-            <h2 className="text-2xl font-semibold text-white mb-2">
+            <h2 className="text-xl font-semibold text-white mb-2">
               Reject Booking
             </h2>
-            <p className="text-gray-400 mb-5">
+            <p className="text-gray-400 text-sm mb-5">
               Please provide a reason for rejecting this booking request.
             </p>
 
@@ -420,13 +443,13 @@ function AdminBookingManagement() {
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="Enter rejection reason..."
-              className="w-full bg-[#0b1730] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0A6ED3]"
+              className="w-full bg-[#0b1730] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0A6ED3]"
             />
 
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={closeRejectModal}
-                className="px-5 py-2.5 rounded-lg border border-white/10 text-white hover:bg-white/5 transition"
+                className="px-5 py-2.5 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition"
               >
                 Close
               </button>
@@ -434,7 +457,7 @@ function AdminBookingManagement() {
               <button
                 onClick={handleRejectConfirm}
                 disabled={processingId === selectedBookingId}
-                className="px-5 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition disabled:opacity-60"
+                className="px-5 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-sm text-white font-medium transition disabled:opacity-60"
               >
                 {processingId === selectedBookingId
                   ? "Rejecting..."
