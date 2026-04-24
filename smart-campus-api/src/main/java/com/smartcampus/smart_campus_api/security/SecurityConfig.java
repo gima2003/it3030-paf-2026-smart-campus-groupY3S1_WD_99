@@ -57,13 +57,18 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/error").permitAll()
                         .requestMatchers(
                                 "/api/ticket-attachments/view/**",
                                 "/api/ticket-attachments/ticket/**")
                         .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(
+                                new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                        )
+                )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authEndpoint -> authEndpoint
                                 .authorizationRequestResolver(authorizationRequestResolver()))

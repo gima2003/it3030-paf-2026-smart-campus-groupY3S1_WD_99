@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createBooking, checkBookingAvailability } from "../services/bookingService";
 import { getFacilities } from "../services/facilityService";
+import { AuthContext } from "../context/AuthContext";
+import { useContext } from "react";
 
 function StudentBookingForm() {
   const location = useLocation();
@@ -12,6 +14,7 @@ function StudentBookingForm() {
   // 2. Book Again from bookings page
   const selectedResourceId = location.state?.resourceId || "";
   const bookingData = location.state?.bookingData || null;
+  const { user } = useContext(AuthContext);
 
   const [facilities, setFacilities] = useState([]);
   const [loadingFacilities, setLoadingFacilities] = useState(true);
@@ -36,7 +39,7 @@ function StudentBookingForm() {
   useEffect(() => {
     fetchFacilities();
 
-    const storedUserId = localStorage.getItem("userId") || "1";
+    const storedUserId = user?.id || localStorage.getItem("userId") || "1";
 
     setFormData({
       userId: storedUserId,
@@ -107,7 +110,10 @@ function StudentBookingForm() {
     try {
       setLoadingFacilities(true);
       const data = await getFacilities();
-      setFacilities(Array.isArray(data) ? data : []);
+      const activeFacilities = Array.isArray(data) 
+        ? data.filter(f => f.status === "ACTIVE" && f.active !== false)
+        : [];
+      setFacilities(activeFacilities);
     } catch (error) {
       console.error("Error loading facilities:", error);
       setErrorMessage("Failed to load facilities.");
