@@ -173,7 +173,9 @@ function StudentBookings() {
 
     if (!result.isConfirmed) return;
 
-    navigate("/student/bookings/new", {
+    const role = localStorage.getItem("role") || "";
+    const basePath = role === "LECTURER" ? "/lecturer" : "/student";
+    navigate(`${basePath}/bookings/new`, {
       state: {
         bookingData: {
           resourceId: booking.resourceId || "",
@@ -359,7 +361,11 @@ function StudentBookings() {
           </div>
 
           <button
-            onClick={() => navigate("/student/bookings/calendar")}
+            onClick={() => {
+              const role = localStorage.getItem("role") || "";
+              const basePath = role === "LECTURER" ? "/lecturer" : "/student";
+              navigate(`${basePath}/bookings/calendar`);
+            }}
             className="bg-[#0A6ED3] hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
           >
             Calendar View

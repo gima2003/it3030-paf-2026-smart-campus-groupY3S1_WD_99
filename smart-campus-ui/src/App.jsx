@@ -50,6 +50,7 @@ import MfaSetup from "./pages/MfaSetup";
 import MfaVerify from "./pages/MfaVerify";
 
 
+
 /* LANDING PAGE */
 function LandingPage() {
   return (
@@ -141,12 +142,14 @@ function App() {
             <Route index element={<LecturerDashboard />} />
             <Route path="tickets" element={<StudentTickets />} />
             <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="resources" element={<ResourceManagement />} />
-            <Route
-              path="booking-management"
-              element={<AdminBookingManagement />}
-            />
-          </Route>
+            <Route path="resources" element={<StudentResources />} />
+              {/* ADD THESE */}
+  <Route path="bookings" element={<StudentBookings />} />
+  <Route path="bookings/new" element={<StudentBookingForm />} />
+  <Route path="bookings/calendar" element={<StudentBookingCalendar />} />
+
+  <Route path="booking-management" element={<AdminBookingManagement />} />
+</Route>
 
           {/* STUDENT - TEMPORARILY WITHOUT ProtectedRoute */}
           <Route path="/student" element={<StudentLayout />}>

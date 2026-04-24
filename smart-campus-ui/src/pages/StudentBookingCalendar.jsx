@@ -226,7 +226,11 @@ function StudentBookingCalendar() {
           </div>
 
           <button
-            onClick={() => navigate("/student/bookings")}
+            onClick={() => {
+              const role = localStorage.getItem("role") || "";
+              const basePath = role === "LECTURER" ? "/lecturer" : "/student";
+              navigate(`${basePath}/bookings`);
+            }}
             className="bg-[#0A6ED3] hover:bg-blue-600 text-white font-semibold px-5 py-3 rounded-xl transition"
           >
             Back to My Bookings

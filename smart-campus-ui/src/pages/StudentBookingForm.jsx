@@ -255,7 +255,9 @@ function StudentBookingForm() {
           },
         });
 
-        navigate("/student/bookings");
+        const role = localStorage.getItem("role") || "";
+        const basePath = role === "LECTURER" ? "/lecturer" : "/student";
+        navigate(`${basePath}/bookings`);
     } catch (error) {
       console.error("Booking creation failed:", error);
 

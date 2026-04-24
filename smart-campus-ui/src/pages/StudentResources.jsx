@@ -396,7 +396,9 @@ function StudentResources() {
   };
 
   const handleBookNow = (resource) => {
-    navigate("/student/bookings/new", {
+    const role = localStorage.getItem("role") || "";
+    const basePath = role === "LECTURER" ? "/lecturer" : "/student";
+    navigate(`${basePath}/bookings/new`, {
       state: {
         resourceId: resource.id,
         resourceType: resource.category,
