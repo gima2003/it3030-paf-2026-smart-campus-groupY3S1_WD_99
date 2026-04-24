@@ -1,7 +1,19 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 function LecturerSidebar() {
   const location = useLocation();
+  const [hasUnreadBookingNotif, setHasUnreadBookingNotif] = useState(false);
+
+  useEffect(() => {
+    const handleFetched = (e) => {
+      const list = e.detail;
+      const unreadBooking = list.some(n => !n.isRead && n.title.toLowerCase().includes('booking'));
+      setHasUnreadBookingNotif(unreadBooking);
+    };
+    window.addEventListener("notificationsFetched", handleFetched);
+    return () => window.removeEventListener("notificationsFetched", handleFetched);
+  }, []);
 
   const linkClass = (path) =>
     `block px-4 py-2 rounded-lg transition ${
@@ -31,8 +43,11 @@ function LecturerSidebar() {
           Browse Resources
         </Link>
 
-        <Link className={linkClass("/lecturer/bookings")} to="/lecturer/bookings">
-          My Bookings
+        <Link className={`${linkClass("/lecturer/bookings")} flex items-center justify-between`} to="/lecturer/bookings">
+          <span>My Bookings</span>
+          {hasUnreadBookingNotif && (
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-2"></span>
+          )}
         </Link>
 
         <Link

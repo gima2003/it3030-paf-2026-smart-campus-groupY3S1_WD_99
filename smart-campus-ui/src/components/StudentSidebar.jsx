@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   FaTachometerAlt,
@@ -11,11 +12,22 @@ import {
 
 function StudentSidebar() {
   const location = useLocation();
+  const [hasUnreadBookingNotif, setHasUnreadBookingNotif] = useState(false);
+
+  useEffect(() => {
+    const handleFetched = (e) => {
+      const list = e.detail;
+      const unreadBooking = list.some(n => !n.isRead && n.title.toLowerCase().includes('booking'));
+      setHasUnreadBookingNotif(unreadBooking);
+    };
+    window.addEventListener("notificationsFetched", handleFetched);
+    return () => window.removeEventListener("notificationsFetched", handleFetched);
+  }, []);
 
   const navItems = [
     { name: "Dashboard", path: "/student", icon: <FaTachometerAlt /> },
     { name: "Browse Resources", path: "/student/resources", icon: <FaUniversity /> },
-    { name: "My Bookings", path: "/student/bookings", icon: <FaCalendarCheck /> },
+    { name: "My Bookings", path: "/student/bookings", icon: <FaCalendarCheck />, showDot: hasUnreadBookingNotif },
     { name: "Report Issue", path: "/student/report", icon: <FaExclamationCircle /> },
     { name: "My Tickets", path: "/student/tickets", icon: <FaTicketAlt /> },
     { name: "Notifications", path: "/student/notifications", icon: <FaBell /> },
@@ -77,7 +89,10 @@ function StudentSidebar() {
             >
               {item.icon}
             </span>
-            <span>{item.name}</span>
+            <span className="flex-1">{item.name}</span>
+            {item.showDot && (
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-auto"></span>
+            )}
           </Link>
         ))}
       </nav>

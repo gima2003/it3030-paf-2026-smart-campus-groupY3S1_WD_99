@@ -6,6 +6,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import org.springframework.scheduling.annotation.Async;
+
 @Service
 public class EmailService {
 
@@ -35,6 +37,22 @@ public class EmailService {
             System.out.println("Welcome email sent successfully to " + toEmail);
         } catch (Exception e) {
             System.err.println("Failed to send welcome email to " + toEmail + ". Error: " + e.getMessage());
+        }
+    }
+    @Async
+    public void sendNotificationEmail(String toEmail, String subject, String text) {
+        if(toEmail == null || toEmail.trim().isEmpty()) return;
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+        
+        try {
+            mailSender.send(message);
+            System.out.println("Notification email sent successfully to " + toEmail);
+        } catch (Exception e) {
+            System.err.println("Failed to send notification email to " + toEmail + ". Error: " + e.getMessage());
         }
     }
 }

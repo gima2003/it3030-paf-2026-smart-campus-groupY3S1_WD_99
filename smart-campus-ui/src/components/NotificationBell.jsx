@@ -22,7 +22,7 @@ function NotificationBell({ rolePrefix = "admin" }) {
        }
     }
     // Only poll when the user component is mounted contextually.
-    const intervalId = setInterval(fetchNotifications, 60000); // 1-minute polling
+    const intervalId = setInterval(fetchNotifications, 15000); // 15-second polling for near real-time
 
     const handleUpdateEvent = () => fetchNotifications();
     window.addEventListener("notificationsUpdated", handleUpdateEvent);
@@ -41,6 +41,9 @@ function NotificationBell({ rolePrefix = "admin" }) {
       setUnreadCount(count);
       const list = await notificationService.getUserNotifications();
       setNotifications(list.slice(0, 5)); // show top 5 in preview
+      
+      const event = new CustomEvent("notificationsFetched", { detail: list });
+      window.dispatchEvent(event);
     } catch (error) {
       console.error("Failed to fetch notifications");
     }

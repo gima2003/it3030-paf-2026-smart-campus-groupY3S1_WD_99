@@ -4,6 +4,7 @@ import com.smartcampus.smart_campus_api.dto.TicketAnalyticsResponse;
 import com.smartcampus.smart_campus_api.dto.TicketResponse;
 import com.smartcampus.smart_campus_api.entity.Ticket;
 import com.smartcampus.smart_campus_api.repository.TicketRepository;
+import com.smartcampus.smart_campus_api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,12 @@ public class TicketService {
 
     @Autowired
     private TicketRepository ticketRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // Create Ticket
     public Ticket createTicket(Ticket ticket) {
@@ -80,7 +87,18 @@ public class TicketService {
             ticket.setFirstResponseAt(LocalDateTime.now());
         }
 
-        return ticketRepository.save(ticket);
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        if (ticket.getCreatedByEmail() != null) {
+            userRepository.findByEmail(ticket.getCreatedByEmail()).ifPresent(user -> {
+                String title = "Ticket Assigned";
+                String message = "Your ticket '" + ticket.getTitle() + "' has been assigned to a technician and is now IN_PROGRESS.";
+                String actionUrl = "LECTURER".equalsIgnoreCase(user.getRole()) ? "/lecturer/tickets" : "/student/tickets";
+                notificationService.createSystemNotification(user.getId(), title, message, actionUrl);
+            });
+        }
+
+        return savedTicket;
     }
 
     // Update status
@@ -103,7 +121,18 @@ public class TicketService {
             ticket.setResolvedAt(LocalDateTime.now());
         }
 
-        return ticketRepository.save(ticket);
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        if (ticket.getCreatedByEmail() != null) {
+            userRepository.findByEmail(ticket.getCreatedByEmail()).ifPresent(user -> {
+                String title = "Ticket Status Updated";
+                String message = "Your ticket '" + ticket.getTitle() + "' status has been updated to " + normalizedStatus + ".";
+                String actionUrl = "LECTURER".equalsIgnoreCase(user.getRole()) ? "/lecturer/tickets" : "/student/tickets";
+                notificationService.createSystemNotification(user.getId(), title, message, actionUrl);
+            });
+        }
+
+        return savedTicket;
     }
 
     // Edit ticket -> only when status is OPEN

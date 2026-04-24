@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   FaTachometerAlt,
@@ -13,12 +14,23 @@ import {
 
 function AdminSidebar() {
   const location = useLocation();
+  const [hasUnreadBookingNotif, setHasUnreadBookingNotif] = useState(false);
+
+  useEffect(() => {
+    const handleFetched = (e) => {
+      const list = e.detail;
+      const unreadBooking = list.some(n => !n.isRead && n.title.toLowerCase().includes('booking'));
+      setHasUnreadBookingNotif(unreadBooking);
+    };
+    window.addEventListener("notificationsFetched", handleFetched);
+    return () => window.removeEventListener("notificationsFetched", handleFetched);
+  }, []);
 
   const navItems = [
     { name: "Dashboard", path: "/admin", icon: <FaTachometerAlt /> },
     { name: "User Management", path: "/admin/users", icon: <FaUsers /> },
     { name: "Facilities & Assets", path: "/admin/resources", icon: <FaBuilding /> },
-    { name: "Booking Management", path: "/admin/booking-management", icon: <FaCalendarCheck /> },
+    { name: "Booking Management", path: "/admin/booking-management", icon: <FaCalendarCheck />, showDot: hasUnreadBookingNotif },
     { name: "Tickets Management", path: "/admin/tickets", icon: <FaTools /> },
     { name: "Technicians Management", path: "/admin/technicians", icon: <FaUserCog /> },
     { name: "Notifications", path: "/admin/notifications", icon: <FaBell /> },
@@ -69,7 +81,10 @@ function AdminSidebar() {
             >
               {item.icon}
             </span>
-            <span>{item.name}</span>
+            <span className="flex-1">{item.name}</span>
+            {item.showDot && (
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-auto"></span>
+            )}
           </Link>
         ))}
       </nav>

@@ -13,6 +13,7 @@ import com.smartcampus.smart_campus_api.repository.EquipmentRepository;
 import com.smartcampus.smart_campus_api.repository.FacilityRepository;
 import com.smartcampus.smart_campus_api.repository.UserRepository;
 import com.smartcampus.smart_campus_api.service.BookingService;
+import com.smartcampus.smart_campus_api.service.NotificationService;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -30,17 +31,20 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final FacilityRepository facilityRepository;
     private final EquipmentRepository equipmentRepository;
+    private final NotificationService notificationService;
 
     public BookingServiceImpl(
             BookingRepository bookingRepository,
             UserRepository userRepository,
             FacilityRepository facilityRepository,
-            EquipmentRepository equipmentRepository
+            EquipmentRepository equipmentRepository,
+            NotificationService notificationService
     ) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.facilityRepository = facilityRepository;
         this.equipmentRepository = equipmentRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -162,7 +166,19 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.APPROVED);
         booking.setAdminReason(decisionDto != null ? decisionDto.getReason() : null);
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+        
+        if (booking.getUser() != null) {
+            String resourceName = booking.getResourceType() == BookingResourceType.FACILITY && booking.getFacility() != null 
+                ? booking.getFacility().getName() 
+                : (booking.getEquipment() != null ? booking.getEquipment().getName() : "Resource");
+            String title = "Booking Approved";
+            String message = "Your booking request for " + resourceName + " on " + booking.getBookingDate() + " has been approved.";
+            String actionUrl = "LECTURER".equalsIgnoreCase(booking.getUser().getRole()) ? "/lecturer/bookings" : "/student/bookings";
+            notificationService.createSystemNotification(booking.getUser().getId(), title, message, actionUrl);
+        }
+
+        return mapToDto(savedBooking);
     }
 
     @Override
@@ -177,7 +193,22 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.REJECTED);
         booking.setAdminReason(decisionDto != null ? decisionDto.getReason() : null);
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+        
+        if (booking.getUser() != null) {
+            String resourceName = booking.getResourceType() == BookingResourceType.FACILITY && booking.getFacility() != null 
+                ? booking.getFacility().getName() 
+                : (booking.getEquipment() != null ? booking.getEquipment().getName() : "Resource");
+            String title = "Booking Rejected";
+            String message = "Your booking request for " + resourceName + " on " + booking.getBookingDate() + " has been rejected.";
+            if (decisionDto != null && decisionDto.getReason() != null) {
+                message += " Reason: " + decisionDto.getReason();
+            }
+            String actionUrl = "LECTURER".equalsIgnoreCase(booking.getUser().getRole()) ? "/lecturer/bookings" : "/student/bookings";
+            notificationService.createSystemNotification(booking.getUser().getId(), title, message, actionUrl);
+        }
+
+        return mapToDto(savedBooking);
     }
 
     @Override
@@ -192,7 +223,22 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setAdminReason(decisionDto != null ? decisionDto.getReason() : null);
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+        
+        if (booking.getUser() != null) {
+            String resourceName = booking.getResourceType() == BookingResourceType.FACILITY && booking.getFacility() != null 
+                ? booking.getFacility().getName() 
+                : (booking.getEquipment() != null ? booking.getEquipment().getName() : "Resource");
+            String title = "Booking Cancelled";
+            String message = "Your approved booking for " + resourceName + " on " + booking.getBookingDate() + " has been cancelled by the administrator.";
+            if (decisionDto != null && decisionDto.getReason() != null) {
+                message += " Reason: " + decisionDto.getReason();
+            }
+            String actionUrl = "LECTURER".equalsIgnoreCase(booking.getUser().getRole()) ? "/lecturer/bookings" : "/student/bookings";
+            notificationService.createSystemNotification(booking.getUser().getId(), title, message, actionUrl);
+        }
+
+        return mapToDto(savedBooking);
     }
 
     @Override

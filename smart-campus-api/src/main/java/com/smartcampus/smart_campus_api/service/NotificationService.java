@@ -10,6 +10,7 @@ import com.smartcampus.smart_campus_api.enums.TargetAudienceType;
 import com.smartcampus.smart_campus_api.repository.AdminNotificationRepository;
 import com.smartcampus.smart_campus_api.repository.UserNotificationRepository;
 import com.smartcampus.smart_campus_api.repository.UserRepository;
+import com.smartcampus.smart_campus_api.enums.NotificationPriority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
+
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private AdminNotificationRepository adminNotificationRepo;
@@ -97,10 +101,55 @@ public class NotificationService {
             UserNotification un = new UserNotification();
             un.setNotification(notification);
             un.setRecipientUserId(user.getId());
+            
+            if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+                String subject = "Smart Campus Notification: " + notification.getTitle();
+                String text = "Hello " + (user.getFirstName() != null ? user.getFirstName() : "") + ",\n\n" 
+                        + "You have a new notification:\n\n"
+                        + notification.getTitle() + "\n"
+                        + notification.getMessage() + "\n\n"
+                        + "Please log in to your dashboard to view more details.";
+                emailService.sendNotificationEmail(user.getEmail(), subject, text);
+            }
+            
             return un;
         }).collect(Collectors.toList());
 
         userNotificationRepo.saveAll(userNotifications);
+    }
+    
+    @Transactional
+    public void createSystemNotification(Long targetUserId, String title, String message, String actionUrl) {
+        AdminNotification notification = new AdminNotification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setType(com.smartcampus.smart_campus_api.enums.NotificationType.SYSTEM);
+        notification.setPriority(NotificationPriority.MEDIUM);
+        notification.setTargetAudience(TargetAudienceType.SPECIFIC_USER);
+        notification.setTargetUserId(targetUserId);
+        notification.setActionUrl(actionUrl);
+        notification.setPinned(false);
+        notification.setStartDate(LocalDateTime.now());
+        notification.setCreatedBy(1L); 
+        notification.setStatus(NotificationStatus.SENT);
+        notification.setSentAt(LocalDateTime.now());
+
+        AdminNotification savedNotification = adminNotificationRepo.save(notification);
+
+        UserNotification un = new UserNotification();
+        un.setNotification(savedNotification);
+        un.setRecipientUserId(targetUserId);
+        userNotificationRepo.save(un);
+
+        userRepository.findById(targetUserId).ifPresent(user -> {
+            if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+                String subject = "Smart Campus System Notification: " + title;
+                String text = "Hello " + (user.getFirstName() != null ? user.getFirstName() : "") + ",\n\n" 
+                        + message + "\n\n"
+                        + "Please log in to your dashboard to view more details.";
+                emailService.sendNotificationEmail(user.getEmail(), subject, text);
+            }
+        });
     }
     
     public List<AdminNotification> getAllAdminNotifications() {
