@@ -18,6 +18,7 @@ import {
 function StudentBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -189,6 +190,33 @@ function StudentBookings() {
     });
   };
 
+  const handleViewQR = (booking) => {
+    const qrData = `
+    Booking ID: ${booking.id}
+    Facility: ${booking.facilityName || booking.resourceName || booking.equipmentName || "Unknown Facility"}
+    Date: ${booking.bookingDate || booking.date}
+    Time: ${booking.startTime} - ${booking.endTime}
+    `;
+
+    Swal.fire({
+      title: "Booking QR",
+      html: `
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <img 
+            src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}"
+            alt="QR Code"
+            style="margin-bottom:15px"
+          />
+          <p style="font-size:12px;color:#aaa">Scan for booking details</p>
+        </div>
+      `,
+      showConfirmButton: true,
+      confirmButtonText: "Close",
+      background: "#081225",
+      color: "#ffffff",
+    });
+  };
+
   const getStatusBadge = (status) => {
     const base =
       "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border";
@@ -317,12 +345,21 @@ function StudentBookings() {
 
         <div className="flex flex-wrap gap-3">
           {booking.status === "APPROVED" && (
-            <button
-              onClick={() => handleCancel(booking.id)}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
-            >
-              Cancel
-            </button>
+            <>
+              <button
+                onClick={() => handleViewQR(booking)}
+                className="bg-[#0A6ED3] hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+              >
+                View QR
+              </button>
+
+              <button
+                onClick={() => handleCancel(booking.id)}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+              >
+                Cancel
+              </button>
+            </>
           )}
 
           {(booking.status === "REJECTED" || booking.status === "CANCELLED") && (
