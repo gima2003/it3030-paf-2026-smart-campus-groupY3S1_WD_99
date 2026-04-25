@@ -57,7 +57,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/error", "/favicon.ico").permitAll()
                         .requestMatchers(
                                 "/api/ticket-attachments/view/**",
                                 "/api/ticket-attachments/ticket/**")
