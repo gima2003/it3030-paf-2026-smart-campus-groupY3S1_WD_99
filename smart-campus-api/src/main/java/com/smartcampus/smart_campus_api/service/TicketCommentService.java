@@ -1,7 +1,6 @@
 package com.smartcampus.smart_campus_api.service;
 
 import com.smartcampus.smart_campus_api.entity.TicketComment;
-import com.smartcampus.smart_campus_api.entity.Ticket;
 import com.smartcampus.smart_campus_api.repository.TicketCommentRepository;
 import com.smartcampus.smart_campus_api.repository.TicketRepository;
 import com.smartcampus.smart_campus_api.repository.UserRepository;
