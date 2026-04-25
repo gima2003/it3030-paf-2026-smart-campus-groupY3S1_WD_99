@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { getAllBookings } from "../services/bookingService";
 
 function AdminDashboard() {
   const API = "http://localhost:8081";
@@ -13,6 +14,9 @@ function AdminDashboard() {
     averageResolutionTime: "N/A",
   });
 
+  // ✅ NEW STATE (only addition)
+  const [pendingBookings, setPendingBookings] = useState(0);
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -25,6 +29,27 @@ function AdminDashboard() {
 
     fetchAnalytics();
   }, []);
+
+  // ✅ NEW useEffect (only addition)
+  useEffect(() => {
+    fetchPendingBookings();
+  }, []);
+
+  // ✅ NEW FUNCTION (only addition)
+  const fetchPendingBookings = async () => {
+    try {
+      const data = await getAllBookings();
+
+      const pendingCount = Array.isArray(data)
+        ? data.filter((booking) => booking.status === "PENDING").length
+        : 0;
+
+      setPendingBookings(pendingCount);
+    } catch (error) {
+      console.error("Error fetching pending bookings:", error);
+      setPendingBookings(0);
+    }
+  };
 
   return (
     <div className="p-6 bg-[#000919] min-h-screen text-white">
@@ -42,9 +67,12 @@ function AdminDashboard() {
           </span>
         </div>
 
+        {/* ✅ UPDATED CARD (only this value changed) */}
         <div className="bg-[#0B1220] p-6 rounded-2xl border border-white/10 hover:border-[#0A6ED3] transition">
           <h3 className="text-gray-400 text-sm">Pending Bookings</h3>
-          <p className="text-3xl font-bold mt-2 text-white">6</p>
+          <p className="text-3xl font-bold mt-2 text-white">
+            {pendingBookings}
+          </p>
           <span className="text-xs text-gray-500 mt-2 block">
             Awaiting Approval
           </span>

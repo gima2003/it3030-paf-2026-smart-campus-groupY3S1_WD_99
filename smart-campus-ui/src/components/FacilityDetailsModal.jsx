@@ -28,6 +28,7 @@ import {
   Layers,
   CheckCircle2,
 } from "lucide-react";
+import { getAllBookings } from "../services/bookingService";
 
 /* ─── API URLs ───────────────────────────────────────────────────── */
 const getFacilityUrl = (id) => `http://localhost:8081/api/facilities/${id}`;
@@ -463,7 +464,7 @@ function BookingsSection({ bookings, onAddBooking }) {
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="space-y-1 min-w-0">
                       <p className="text-sm font-semibold text-white/80">
-                        {formatDate(booking.date)}
+                        {formatDate(booking.bookingDate || booking.date)}
                       </p>
                       <p className="text-xs text-white/45 flex items-center gap-1.5">
                         <Clock size={11} className="text-[#6CB6FF]/50" />
@@ -667,7 +668,7 @@ export default function FacilityDetailsModal({
           axios.get(getFacilityUrl(facilityId)),
           axios.get(getFacilityImagesUrl(facilityId)),
           axios.get(getFacilitySchedulesUrl(facilityId)),
-          axios.get(getFacilityBookingsUrl(facilityId)),
+          getAllBookings(),
         ]);
 
       if (facilityRes.status === "fulfilled") setFacility(facilityRes.value.data);
@@ -676,7 +677,21 @@ export default function FacilityDetailsModal({
         setImages([...imgs].sort((a, b) => (a.isPrimary === b.isPrimary ? 0 : a.isPrimary ? -1 : 1)));
       }
       if (schedulesRes.status === "fulfilled") setSchedules(schedulesRes.value.data || []);
-      if (bookingsRes.status === "fulfilled") setBookings(bookingsRes.value.data || []);
+      if (bookingsRes.status === "fulfilled") {
+        const allBookings = bookingsRes.value || [];
+
+        const facilityBookings = allBookings.filter((booking) => {
+          const bookingFacilityId =
+            booking.resourceId ||
+            booking.facilityId ||
+            booking.facility?.id ||
+            booking.resource?.id;
+
+          return Number(bookingFacilityId) === Number(facilityId);
+        });
+
+        setBookings(facilityBookings);
+      }
 
       setImagesLoading(false);
       setLoading(false);

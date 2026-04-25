@@ -580,6 +580,12 @@ function StudentResources() {
           isOpen={isFacilityModalOpen}
           onClose={handleCloseFacilityModal}
           facilityId={selectedFacilityId}
+          onAddBooking={(facility) =>
+            handleBookNow({
+              id: facility.id,
+              category: "FACILITY",
+            })
+          }
         />
       </div>
     </div>
