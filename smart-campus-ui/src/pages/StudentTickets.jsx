@@ -71,10 +71,12 @@ function CreateTicketForm() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const itPattern = /^(IT|it)\d{8}$/;
+  const itPattern = /^IT\d{8}$/;
+  const lecPattern = /^LEC\d{3}$/;
 
  const handleChange = (e) => {
   const { name, value } = e.target;
+  const role = user?.role || localStorage.getItem("role") || "STUDENT";
 
   if (name === "itNumber") {
     let cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -84,18 +86,32 @@ function CreateTicketForm() {
       return;
     }
 
-    // First character must be I
-    if (cleaned.length === 1) {
-      cleaned = cleaned === "I" ? "I" : "";
-    }
-
-    // First two characters must be IT
-    if (cleaned.length >= 2) {
-      if (!cleaned.startsWith("IT")) {
-        cleaned = cleaned[0] === "I" ? "I" : "";
-      } else {
-        const numbersOnly = cleaned.slice(2).replace(/\D/g, "");
-        cleaned = "IT" + numbersOnly.slice(0, 8);
+    if (role === "STUDENT") {
+      if (cleaned.length === 1) {
+        cleaned = cleaned === "I" ? "I" : "";
+      }
+      if (cleaned.length >= 2) {
+        if (!cleaned.startsWith("IT")) {
+          cleaned = cleaned[0] === "I" ? "I" : "";
+        } else {
+          const numbersOnly = cleaned.slice(2).replace(/\D/g, "");
+          cleaned = "IT" + numbersOnly.slice(0, 8);
+        }
+      }
+    } else if (role === "LECTURER") {
+      if (cleaned.length === 1) {
+        cleaned = cleaned === "L" ? "L" : "";
+      }
+      if (cleaned.length === 2) {
+        cleaned = cleaned === "LE" ? "LE" : cleaned[0] === "L" ? "L" : "";
+      }
+      if (cleaned.length >= 3) {
+        if (!cleaned.startsWith("LEC")) {
+          cleaned = cleaned === "LE" ? "LE" : cleaned[0] === "L" ? "L" : "";
+        } else {
+          const numbersOnly = cleaned.slice(3).replace(/\D/g, "");
+          cleaned = "LEC" + numbersOnly.slice(0, 3);
+        }
       }
     }
 
@@ -108,14 +124,19 @@ function CreateTicketForm() {
 
   const validate = () => {
     const newErrors = {};
+    const role = user?.role || localStorage.getItem("role") || "STUDENT";
 
-    if (user?.role === 'LECTURER' || user?.role === 'MANAGER') {
-      if (!form.itNumber || form.itNumber.trim() === "") {
-        newErrors.itNumber = "Required";
+    if (role === 'LECTURER') {
+      if (!lecPattern.test(form.itNumber)) {
+        newErrors.itNumber = "Format: LEC003";
       }
-    } else {
+    } else if (role === 'STUDENT') {
       if (!itPattern.test(form.itNumber)) {
         newErrors.itNumber = "Format: IT12345678";
+      }
+    } else {
+      if (!form.itNumber || form.itNumber.trim() === "") {
+        newErrors.itNumber = "Required";
       }
     }
 
@@ -309,19 +330,19 @@ function CreateTicketForm() {
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         <div>
           <label className="text-gray-300">
-            {user?.role === 'LECTURER' || user?.role === 'MANAGER' ? 'Employee ID *' : 'IT Number *'}
+            {(user?.role || localStorage.getItem("role")) === 'STUDENT' ? 'Student ID *' : 'Employee ID *'}
           </label>
          <input
   name="itNumber"
   value={form.itNumber}
   onChange={handleChange}
-  placeholder="Format: IT12345678"
-  maxLength={10}
+  placeholder={(user?.role || localStorage.getItem("role")) === 'LECTURER' ? "Format: LEC003" : "Format: IT12345678"}
+  maxLength={(user?.role || localStorage.getItem("role")) === 'LECTURER' ? 6 : 10}
   className="w-full p-3 mt-1 bg-transparent border border-white/10 rounded-lg"
 />
 
 <p className="text-xs text-gray-400 mt-1">
-  Format: IT + 8 digits, example: IT12345678
+  {(user?.role || localStorage.getItem("role")) === 'LECTURER' ? "Format: LEC + 3 digits, example: LEC003" : "Format: IT + 8 digits, example: IT23692978"}
 </p>
           {errors.itNumber && (
             <p className="text-red-400 text-sm mt-1">{errors.itNumber}</p>
