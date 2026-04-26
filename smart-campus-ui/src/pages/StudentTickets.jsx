@@ -73,10 +73,38 @@ function CreateTicketForm() {
 
   const itPattern = /^(IT|it)\d{8}$/;
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+ const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  if (name === "itNumber") {
+    let cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+    if (cleaned.length === 0) {
+      setForm((prev) => ({ ...prev, itNumber: "" }));
+      return;
+    }
+
+    // First character must be I
+    if (cleaned.length === 1) {
+      cleaned = cleaned === "I" ? "I" : "";
+    }
+
+    // First two characters must be IT
+    if (cleaned.length >= 2) {
+      if (!cleaned.startsWith("IT")) {
+        cleaned = cleaned[0] === "I" ? "I" : "";
+      } else {
+        const numbersOnly = cleaned.slice(2).replace(/\D/g, "");
+        cleaned = "IT" + numbersOnly.slice(0, 8);
+      }
+    }
+
+    setForm((prev) => ({ ...prev, itNumber: cleaned }));
+    return;
+  }
+
+  setForm((prev) => ({ ...prev, [name]: value }));
+};
 
   const validate = () => {
     const newErrors = {};
@@ -283,13 +311,18 @@ function CreateTicketForm() {
           <label className="text-gray-300">
             {user?.role === 'LECTURER' || user?.role === 'MANAGER' ? 'Employee ID *' : 'IT Number *'}
           </label>
-          <input
-            name="itNumber"
-            value={form.itNumber}
-            onChange={handleChange}
-            placeholder={user?.role === 'LECTURER' || user?.role === 'MANAGER' ? 'EMP12345' : 'IT12345678'}
-            className="w-full p-3 mt-1 bg-transparent border border-white/10 rounded-lg"
-          />
+         <input
+  name="itNumber"
+  value={form.itNumber}
+  onChange={handleChange}
+  placeholder="Format: IT12345678"
+  maxLength={10}
+  className="w-full p-3 mt-1 bg-transparent border border-white/10 rounded-lg"
+/>
+
+<p className="text-xs text-gray-400 mt-1">
+  Format: IT + 8 digits, example: IT12345678
+</p>
           {errors.itNumber && (
             <p className="text-red-400 text-sm mt-1">{errors.itNumber}</p>
           )}
