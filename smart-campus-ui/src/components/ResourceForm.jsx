@@ -11,7 +11,7 @@ function ResourceForm({ isOpen, onClose, onSubmit, initialData }) {
     status: "ACTIVE",
     isBookable: true,
     location: "",
-    capacity: 0,
+    capacity:"",
     indoorOutdoor: "INDOOR",
   };
 
@@ -426,7 +426,7 @@ function ResourceForm({ isOpen, onClose, onSubmit, initialData }) {
                       name="capacity"
                       value={formData.capacity}
                       onChange={handleChange}
-                      min="0"
+                      min=""
                       className="w-full rounded-lg bg-[#001233] border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#0A6ED3]"
                       placeholder="e.g. 1"
                     />

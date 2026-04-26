@@ -16,6 +16,11 @@ function AdminDashboard() {
 
   // ✅ NEW STATE (only addition)
   const [pendingBookings, setPendingBookings] = useState(0);
+  const [resourceCounts, setResourceCounts] = useState({
+  total: 0,
+  facilities: 0,
+  equipment: 0,
+});
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -35,6 +40,10 @@ function AdminDashboard() {
     fetchPendingBookings();
   }, []);
 
+  useEffect(() => {
+    fetchResourceCounts();
+  }, []);
+
   // ✅ NEW FUNCTION (only addition)
   const fetchPendingBookings = async () => {
     try {
@@ -51,6 +60,31 @@ function AdminDashboard() {
     }
   };
 
+  const fetchResourceCounts = async () => {
+    try {
+      const [facilityRes, equipmentRes] = await Promise.all([
+        axios.get(`${API}/api/facilities`),
+        axios.get(`${API}/api/equipment`),
+      ]);
+
+      const facilities = Array.isArray(facilityRes.data)
+        ? facilityRes.data.length
+        : 0;
+
+      const equipment = Array.isArray(equipmentRes.data)
+        ? equipmentRes.data.length
+        : 0;
+
+      setResourceCounts({
+        total: facilities + equipment,
+        facilities,
+        equipment,
+      });
+    } catch (error) {
+      console.error("Error fetching resource counts:", error);
+    }
+  };
+
   return (
     <div className="p-6 bg-[#000919] min-h-screen text-white">
       {/* Title */}
@@ -61,9 +95,14 @@ function AdminDashboard() {
         {/* Card 1 */}
         <div className="bg-[#0B1220] p-6 rounded-xl border border-white/10 hover:border-[#0A6ED3] transition">
           <h3 className="text-gray-400 text-sm">Total Resources</h3>
-          <p className="text-3xl font-bold mt-2 text-white">28</p>
+
+          <p className="text-3xl font-bold mt-2 text-white">
+            {resourceCounts.total}
+          </p>
+
           <span className="text-xs text-gray-500 mt-2 block">
-            Rooms, Labs, Equipment
+            Facilities: {resourceCounts.facilities} | Equipment:{" "}
+            {resourceCounts.equipment}
           </span>
         </div>
 
