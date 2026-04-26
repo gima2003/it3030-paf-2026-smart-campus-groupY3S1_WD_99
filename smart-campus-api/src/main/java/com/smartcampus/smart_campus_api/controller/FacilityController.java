@@ -6,6 +6,7 @@ import com.smartcampus.smart_campus_api.service.FacilityService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class FacilityController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FacilityResponseDto> createFacility(@RequestBody FacilityRequestDto requestDto) {
         FacilityResponseDto response = facilityService.createFacility(requestDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -39,6 +41,7 @@ public class FacilityController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FacilityResponseDto> updateFacility(@PathVariable Long id,
                                                               @RequestBody FacilityRequestDto requestDto) {
         FacilityResponseDto updatedFacility = facilityService.updateFacility(id, requestDto);
@@ -46,6 +49,7 @@ public class FacilityController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteFacility(@PathVariable Long id) {
         facilityService.deleteFacility(id);
         return ResponseEntity.ok("Facility deleted successfully");

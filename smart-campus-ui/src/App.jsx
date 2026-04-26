@@ -172,6 +172,7 @@ function App() {
             <Route path="tickets" element={<TechnicianTickets />} />
             <Route path="history" element={<TechnicianHistory />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="resources" element={<StudentResources />} />
           </Route>
         </Routes>
       </AuthProvider>

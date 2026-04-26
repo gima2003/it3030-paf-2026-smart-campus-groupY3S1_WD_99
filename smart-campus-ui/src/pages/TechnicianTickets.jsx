@@ -264,21 +264,40 @@ function TechnicianTickets() {
                   {selectedTicket.description}
                 </p>
                 <p className="mb-2 text-gray-200">
-                  <strong className="text-white">Category:</strong>{" "}
-                  {selectedTicket.category}
-                </p>
-                <p className="mb-2 text-gray-200">
                   <strong className="text-white">Priority:</strong>{" "}
                   {selectedTicket.priority}
-                </p>
-                <p className="mb-2 text-gray-200">
-                  <strong className="text-white">Location:</strong>{" "}
-                  {selectedTicket.building} - {selectedTicket.room}
                 </p>
                 <p className="mb-2 text-gray-200">
                   <strong className="text-white">Status:</strong>{" "}
                   {formatStatus(selectedTicket.status)}
                 </p>
+              </div>
+
+              {/* Related Resource Section */}
+              <div className="border-t border-white/10 pt-5 mb-6">
+                <h4 className="text-lg font-semibold text-white mb-4">
+                  Related Resource
+                </h4>
+                <div className="bg-[#000919] border border-white/10 rounded-xl p-4 flex justify-between items-center">
+                  <div>
+                    <p className="text-white font-medium mb-1">
+                      {selectedTicket.category || "Unknown"}
+                    </p>
+                    <p className="text-sm text-gray-400 flex items-center gap-2">
+                      <span>📍</span>
+                      {selectedTicket.building} - {selectedTicket.room}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Navigate to resources, optionally passing search terms
+                      window.location.href = `/technician/resources`;
+                    }}
+                    className="px-4 py-2 bg-[#0A6ED3]/15 text-[#6CB6FF] border border-[#0A6ED3]/25 rounded-lg text-sm font-medium hover:bg-[#0A6ED3] hover:text-white transition"
+                  >
+                    View Resource
+                  </button>
+                </div>
               </div>
 
               <div className="border-t border-white/10 pt-5 mb-6">

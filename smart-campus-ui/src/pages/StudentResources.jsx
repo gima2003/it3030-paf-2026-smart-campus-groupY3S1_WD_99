@@ -14,6 +14,7 @@ import {
   Layers,
 } from "lucide-react";
 import FacilityDetailsModal from "../components/FacilityDetailsModal";
+import EquipmentDetailsModal from "../components/EquipmentDetailsModal";
 
 const FACILITY_API_URL = "http://localhost:8081/api/facilities";
 const EQUIPMENT_API_URL = "http://localhost:8081/api/equipment";
@@ -254,20 +255,22 @@ function ResourceCard({ resource, onViewDetails, onBookNow }) {
 
         <div className="flex gap-3 mt-auto">
           {/* 🔥 FIXED BUTTON */}
-          <button
-            onClick={() => onBookNow(resource)}
-            disabled={
-              !resource.isBookable ||
-              ["OUT_OF_SERVICE", "UNDER_MAINTENANCE"].includes(resource.status)
-            }
-            className="flex-1 bg-[#0A6ED3] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl font-medium transition"
-          >
-            Book Now
-          </button>
+          {localStorage.getItem("role") !== "TECHNICIAN" && (
+            <button
+              onClick={() => onBookNow(resource)}
+              disabled={
+                !resource.isBookable ||
+                ["OUT_OF_SERVICE", "UNDER_MAINTENANCE"].includes(resource.status)
+              }
+              className="flex-1 bg-[#0A6ED3] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl font-medium transition"
+            >
+              Book Now
+            </button>
+          )}
 
           <button
             onClick={() => onViewDetails(resource)}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
               bg-[#0A6ED3]/15 text-[#6CB6FF] border border-[#0A6ED3]/25
               hover:bg-[#0A6ED3] hover:text-white hover:border-[#0A6ED3]"
           >
@@ -311,6 +314,9 @@ function StudentResources() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
   const [selectedFacilityId, setSelectedFacilityId] = useState(null);
+
+  const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState(null);
 
   const fetchResources = async () => {
     try {
@@ -387,12 +393,20 @@ function StudentResources() {
     if (resource.category === "FACILITY") {
       setSelectedFacilityId(resource.id);
       setIsFacilityModalOpen(true);
+    } else if (resource.category === "EQUIPMENT") {
+      setSelectedEquipmentId(resource.id);
+      setIsEquipmentModalOpen(true);
     }
   };
 
   const handleCloseFacilityModal = () => {
     setIsFacilityModalOpen(false);
     setSelectedFacilityId(null);
+  };
+
+  const handleCloseEquipmentModal = () => {
+    setIsEquipmentModalOpen(false);
+    setSelectedEquipmentId(null);
   };
 
   const handleBookNow = (resource) => {
@@ -586,6 +600,12 @@ function StudentResources() {
               category: "FACILITY",
             })
           }
+        />
+
+        <EquipmentDetailsModal
+          isOpen={isEquipmentModalOpen}
+          onClose={handleCloseEquipmentModal}
+          equipmentId={selectedEquipmentId}
         />
       </div>
     </div>
