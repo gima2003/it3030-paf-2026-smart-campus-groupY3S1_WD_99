@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { QRCodeCanvas } from "qrcode.react";
 import ResourceForm from "../components/ResourceForm";
 import ResourceDetailsModal from "../components/ResourceDetailsModal";
 
@@ -55,12 +56,24 @@ const STATUS_CLASSES = {
   ARCHIVED: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
 };
 
-const TABLE_HEADERS = [
+const FACILITY_TABLE_HEADERS = [
   "Code",
   "Name",
   "Type",
   "Location",
   "Capacity",
+  "Bookable",
+  "Status",
+  "Actions",
+];
+
+const EQUIPMENT_TABLE_HEADERS = [
+  "Code",
+  "Name",
+  "Type",
+  "Location",
+  "Linked Facility",
+  "Quantity",
   "Bookable",
   "Status",
   "Actions",
@@ -105,6 +118,8 @@ const normalizeEquipment = (equipment) => ({
   location: equipment.currentLocation || "",
   capacity: equipment.quantity ?? 0,
   indoorOutdoor: null,
+  facilityIds: equipment.facilityIds || [],
+  facilityNames: equipment.facilityNames || [],
 });
 
 const buildFacilityPayload = (formData, existingEquipmentIds = []) => ({
@@ -320,7 +335,7 @@ function FilterSelect({ value, onChange, options }) {
   );
 }
 
-function ResourceRow({ resource, onView, onEdit, onDelete }) {
+function ResourceRow({ resource, onView, onEdit, onDelete, onQr }) {
   return (
     <tr className="border-b border-white/10 hover:bg-white/5 transition text-sm">
       <td className="px-4 py-2.5 font-medium">{resource.resourceCode}</td>
@@ -330,7 +345,19 @@ function ResourceRow({ resource, onView, onEdit, onDelete }) {
       </td>
 
       <td className="px-4 py-2.5 text-gray-300">{formatEnum(resource.type)}</td>
-      <td className="px-4 py-2.5 text-gray-300">{resource.location || "N/A"}</td>
+
+      <td className="px-4 py-2.5 text-gray-300">
+        {resource.location || "N/A"}
+      </td>
+
+      {resource.resourceCategory === "EQUIPMENT" && (
+        <td className="px-4 py-2.5 text-gray-300">
+          {resource.facilityNames && resource.facilityNames.length > 0
+            ? resource.facilityNames.join(", ")
+            : "Not linked"}
+        </td>
+      )}
+
       <td className="px-4 py-2.5 text-gray-300">{resource.capacity ?? 0}</td>
 
       <td className="px-4 py-2.5">
@@ -357,6 +384,12 @@ function ResourceRow({ resource, onView, onEdit, onDelete }) {
 
       <td className="px-4 py-2.5">
         <div className="flex items-center justify-center gap-1.5">
+          <button
+            onClick={() => onQr(resource)}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md text-xs font-medium transition"
+          >
+            QR
+          </button>
           <button
             onClick={() => onView(resource)}
             className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-medium transition"
@@ -389,7 +422,11 @@ function ResourceTableSection({
   onView,
   onEdit,
   onDelete,
+  onQr,
 }) {
+  const tableHeaders =
+    title === "Equipment" ? EQUIPMENT_TABLE_HEADERS : FACILITY_TABLE_HEADERS;
+
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden mb-5">
       <div className="px-4 py-3 border-b border-white/10 bg-white/5">
@@ -400,7 +437,7 @@ function ResourceTableSection({
         <table className="w-full min-w-[1000px] text-sm">
           <thead className="bg-white/5 border-b border-white/10">
             <tr className="text-left text-xs text-gray-400">
-              {TABLE_HEADERS.map((header) => (
+              {tableHeaders.map((header) => (
                 <th
                   key={header}
                   className={`px-4 py-2.5 font-medium ${
@@ -417,7 +454,7 @@ function ResourceTableSection({
             {loading ? (
               <tr>
                 <td
-                  colSpan="8"
+                  colSpan={tableHeaders.length}
                   className="px-4 py-8 text-center text-sm text-gray-400"
                 >
                   Loading resources...
@@ -426,7 +463,7 @@ function ResourceTableSection({
             ) : resources.length === 0 ? (
               <tr>
                 <td
-                  colSpan="8"
+                  colSpan={tableHeaders.length}
                   className="px-4 py-8 text-center text-sm text-gray-400"
                 >
                   {emptyMessage}
@@ -440,6 +477,7 @@ function ResourceTableSection({
                   onView={onView}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onQr={onQr}
                 />
               ))
             )}
@@ -461,6 +499,7 @@ function ResourceManagement() {
   const [loading, setLoading] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState(null);
+  const [qrResource, setQrResource] = useState(null);
 
   const [alertModal, setAlertModal] = useState({
     isOpen: false,
@@ -787,6 +826,7 @@ function ResourceManagement() {
             onView={handleOpenDetails}
             onEdit={handleOpenEditForm}
             onDelete={handleDelete}
+            onQr={setQrResource}
           />
         )}
 
@@ -799,8 +839,45 @@ function ResourceManagement() {
             onView={handleOpenDetails}
             onEdit={handleOpenEditForm}
             onDelete={handleDelete}
+            onQr={setQrResource}
           />
         )}
+
+        {qrResource && (
+  <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+    <div className="w-full max-w-md rounded-2xl bg-[#081225] border border-white/10 p-8 text-center text-white shadow-2xl">
+      <h2 className="text-2xl font-bold mb-6">Resource QR</h2>
+
+      <div className="bg-white p-3 inline-block rounded-lg">
+        <QRCodeCanvas
+          value={`Smart Campus 360
+          Category: ${qrResource.resourceCategory}
+          Name: ${qrResource.name}
+          Code: ${qrResource.resourceCode}
+          Type: ${qrResource.type}
+          Location: ${qrResource.location || "N/A"}
+          ${qrResource.resourceCategory === "FACILITY" ? "Capacity" : "Quantity"}: ${
+                      qrResource.capacity ?? 0
+                    }
+          Status: ${qrResource.status}
+          Bookable: ${qrResource.isBookable ? "Yes" : "No"}`}
+                    size={220}
+                  />
+                </div>
+
+                <p className="text-gray-400 text-sm mt-4">
+                  Scan for resource details
+                </p>
+
+                <button
+                  onClick={() => setQrResource(null)}
+                  className="mt-6 bg-[#0A6ED3] hover:bg-[#054E98] text-white px-6 py-2 rounded-lg text-sm font-medium transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
 
         <ResourceForm
           isOpen={isFormOpen}
