@@ -1,155 +1,109 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Building2,
-  CalendarCheck,
-  Wrench,
-  Users,
-  Bell,
-  BarChart3,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react";
+  FaTachometerAlt,
+  FaUsers,
+  FaBuilding,
+  FaCalendarCheck,
+  FaTools,
+  FaUserCog,
+  FaBell,
+  FaChartBar,
 
-function AdminSidebar({ isSidebarOpen, toggleSidebar }) {
+} from "react-icons/fa";
+
+function AdminSidebar() {
   const location = useLocation();
+  const [hasUnreadBookingNotif, setHasUnreadBookingNotif] = useState(false);
+  const [hasUnreadTicketNotif, setHasUnreadTicketNotif] = useState(false);
+
+  useEffect(() => {
+    const handleFetched = (e) => {
+      const list = e.detail;
+      const unreadBooking = list.some(n => !n.isRead && (n.type === 'BOOKING' || n.title.toLowerCase().includes('booking')));
+      const unreadTicket = list.some(n => !n.isRead && (n.type === 'TICKET' || n.title.toLowerCase().includes('ticket')));
+      setHasUnreadBookingNotif(unreadBooking);
+      setHasUnreadTicketNotif(unreadTicket);
+    };
+    window.addEventListener("notificationsFetched", handleFetched);
+    return () => window.removeEventListener("notificationsFetched", handleFetched);
+  }, []);
 
   const navItems = [
-    {
-      path: "/admin",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      path: "/admin/resources",
-      label: "Facilities & Assets",
-      icon: Building2,
-    },
-    {
-      path: "/admin/bookings",
-      label: "Booking Management",
-      icon: CalendarCheck,
-    },
-    {
-      path: "/admin/tickets",
-      label: "Tickets Management",
-      icon: Wrench,
-    },
-    {
-      path: "/admin/technicians",
-      label: "Technicians Management",
-      icon: Users,
-    },
-    {
-      path: "/admin/notifications",
-      label: "Notifications",
-      icon: Bell,
-    },
-    {
-      path: "/admin/analytics",
-      label: "Analytics",
-      icon: BarChart3,
-    },
+    { name: "Dashboard", path: "/admin", icon: <FaTachometerAlt /> },
+    { name: "User Management", path: "/admin/users", icon: <FaUsers /> },
+    { name: "Facilities & Assets", path: "/admin/resources", icon: <FaBuilding /> },
+    { name: "Booking Management", path: "/admin/booking-management", icon: <FaCalendarCheck />, showDot: hasUnreadBookingNotif },
+    { name: "Tickets Management", path: "/admin/tickets", icon: <FaTools />, showDot: hasUnreadTicketNotif },
+    { name: "Technicians Management", path: "/admin/technicians", icon: <FaUserCog /> },
+    { name: "Notifications", path: "/admin/notifications", icon: <FaBell /> },
+    { name: "Analytics", path: "/admin/analytics", icon: <FaChartBar /> },
   ];
 
-  const isActivePath = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <aside
-      className={`h-screen bg-[#000919] border-r border-white/10 flex flex-col transition-all duration-300 ease-in-out ${
-        isSidebarOpen ? "w-64" : "w-20"
-      }`}
-    >
-      {/* Top Section */}
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center justify-between">
-          <div
-            className={`overflow-hidden transition-all duration-300 ${
-              isSidebarOpen ? "w-auto opacity-100" : "w-0 opacity-0"
-            }`}
-          >
-            <h2 className="text-xl font-bold text-white whitespace-nowrap">
-              Smart Campus 360
-            </h2>
-            <span className="block text-sm text-gray-400 font-medium mt-1 whitespace-nowrap">
-              Admin Panel
-            </span>
-          </div>
+    <aside className="w-72 min-h-screen bg-[#020817] border-r border-white/10 px-5 py-6 flex flex-col">
 
-          <button
-            onClick={toggleSidebar}
-            className="text-gray-300 hover:text-white hover:bg-[#0B1220] p-2 rounded-lg transition shrink-0"
-          >
-            {isSidebarOpen ? (
-              <PanelLeftClose size={20} />
-            ) : (
-              <PanelLeftOpen size={20} />
-            )}
-          </button>
+      {/* Brand */}
+      <div className="mb-8">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0A6ED3]/20 to-[#0B1220] p-4 shadow-lg">
+          <h2 className="text-white text-xl font-bold tracking-tight">
+            Smart Campus 360
+          </h2>
+          <p className="text-sm text-gray-400 mt-1">
+            Admin Control Panel
+          </p>
         </div>
       </div>
 
+      {/* Section Label */}
+      <div className="mb-3 px-2">
+        <span className="text-xs uppercase tracking-[0.2em] text-gray-500">
+          Navigation
+        </span>
+      </div>
+
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActivePath(item.path);
-
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`group flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${
-                active
-                  ? "bg-[#0A6ED3] text-white"
-                  : "text-gray-400 hover:bg-[#0B1220] hover:text-white"
+      <nav className="space-y-2">
+        {navItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
+              ${isActive(item.path)
+                ? "bg-[#0A6ED3] text-white shadow-md shadow-blue-900/20"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
-              title={!isSidebarOpen ? item.label : ""}
-            >
-              <Icon size={20} className="shrink-0" />
-        <Link className={linkClass("/admin")} to="/admin">
-          Dashboard
-        </Link>
-
-        <Link className={linkClass("/admin/users")} to="/admin/users">
-          User Management
-        </Link>
-
-        <Link className={linkClass("/admin/resources")} to="/admin/resources">
-          Facilities & Assets
-        </Link>
-
-        <Link className={linkClass("/admin/bookings")} to="/admin/bookings">
-          Booking Management
-        </Link>
-
-        <Link className={linkClass("/admin/tickets")} to="/admin/tickets">
-          Tickets Management
-        </Link>
-
-        <Link className={linkClass("/admin/technicians")} to="/admin/technicians">
-          Technicians Management
-        </Link>
-
-        <Link className={linkClass("/admin/notifications")} to="/admin/notifications">
-          Notifications
-        </Link>
-
-        <Link className={linkClass("/admin/analytics")} to="/admin/analytics">
-          Analytics
-        </Link>
-
-              <span
-                className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
-                  isSidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
+          >
+            <span
+              className={`text-base transition ${isActive(item.path)
+                  ? "text-white"
+                  : "text-gray-500 group-hover:text-white"
                 }`}
-              >
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
+            >
+              {item.icon}
+            </span>
+            <span className="flex-1">{item.name}</span>
+            {item.showDot && (
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-auto"></span>
+            )}
+          </Link>
+        ))}
       </nav>
+
+      {/* Bottom Info Card */}
+      <div className="mt-auto pt-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm font-semibold text-white">
+            Campus Administration
+          </p>
+          <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+            Oversee facilities, bookings, maintenance, technician coordination,
+            and notifications from one place.
+          </p>
+        </div>
+      </div>
     </aside>
   );
 }

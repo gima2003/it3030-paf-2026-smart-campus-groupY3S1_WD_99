@@ -28,6 +28,9 @@ export const AuthProvider = ({ children }) => {
       if (response.data?.email) {
         localStorage.setItem("email", response.data.email);
       }
+      if (response.data?.id) {
+        localStorage.setItem("userId", response.data.id);
+      }
     } catch (error) {
       console.error("Failed to fetch user, logging out...", error);
       logout();
@@ -54,6 +57,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("token");
       localStorage.removeItem("role");
       localStorage.removeItem("email");
+      localStorage.removeItem("userId");
       setToken(null);
       setRole(null);
       setUser(null);

@@ -1,18 +1,36 @@
-import axios from 'axios';
+import api from "./api";
 
-const API_URL = 'http://localhost:8081/api/admin/users';
+const API_URL = "/admin/users";
+
+export const getAllUsers = async () => {
+  try {
+    const response = await api.get(API_URL);
+    return response.data;
+  } catch (error) {
+    throw new Error("Failed to fetch users.");
+  }
+};
+
+export const getUserStats = async () => {
+  try {
+    const response = await api.get(`${API_URL}/stats`);
+    return response.data;
+  } catch (error) {
+    throw new Error("Failed to fetch statistics.");
+  }
+};
 
 export const createUser = async (userData) => {
   try {
-    const response = await axios.post(API_URL, userData);
+    const response = await api.post(API_URL, userData);
     return response.data;
   } catch (error) {
     if (error.response && error.response.data) {
       const data = error.response.data;
-      if (typeof data === 'string') {
+      if (typeof data === "string") {
         throw new Error(data);
       } else if (data.errors && Array.isArray(data.errors)) {
-        const errorMsgs = data.errors.map(err => err.defaultMessage);
+        const errorMsgs = data.errors.map((err) => err.defaultMessage);
         throw new Error(errorMsgs.join(", "));
       } else if (data.message) {
         throw new Error(data.message);
@@ -20,62 +38,56 @@ export const createUser = async (userData) => {
         throw new Error(JSON.stringify(data));
       }
     }
-    throw new Error('Failed to create user.');
-  }
-};
-
-export const getAllUsers = async () => {
-    try {
-        const response = await axios.get(API_URL);
-        return response.data;
-    } catch (error) {
-        throw new Error('Failed to fetch users.');
-    }
-};
-
-export const getUserStats = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/stats`);
-    return response.data;
-  } catch (error) {
-    throw new Error('Failed to fetch statistics.');
+    throw new Error("Failed to create user.");
   }
 };
 
 export const updateUserStatus = async (id, isActive) => {
   try {
-    const response = await axios.patch(`${API_URL}/${id}/status`, { isActive });
+    const response = await api.patch(`${API_URL}/${id}/status`, { isActive });
     return response.data;
   } catch (error) {
-    throw new Error('Failed to update user status.');
+    throw new Error("Failed to update user status.");
   }
 };
 
 export const deleteUser = async (id) => {
   try {
-    const response = await axios.delete(`${API_URL}/${id}`);
+    const response = await api.delete(`${API_URL}/${id}`);
     return response.data;
   } catch (error) {
-    throw new Error('Failed to delete user.');
+    throw new Error("Failed to delete user.");
   }
 };
 
 export const updateProfile = async (profileData) => {
   try {
-    const response = await axios.put('http://localhost:8081/api/users/profile', profileData);
+    const response = await api.put("/users/profile", profileData);
     return response.data;
   } catch (error) {
-    if (error.response && error.response.data) throw new Error(error.response.data);
-    throw new Error('Failed to update profile.');
+    if (error.response && error.response.data) {
+      throw new Error(
+        typeof error.response.data === "string"
+          ? error.response.data
+          : error.response.data.message || "Failed to update profile."
+      );
+    }
+    throw new Error("Failed to update profile.");
   }
 };
 
 export const updateUserByAdmin = async (id, adminData) => {
   try {
-    const response = await axios.put(`${API_URL}/${id}`, adminData);
+    const response = await api.put(`${API_URL}/${id}`, adminData);
     return response.data;
   } catch (error) {
-    if (error.response && error.response.data) throw new Error(error.response.data);
-    throw new Error('Failed to update user.');
+    if (error.response && error.response.data) {
+      throw new Error(
+        typeof error.response.data === "string"
+          ? error.response.data
+          : error.response.data.message || "Failed to update user."
+      );
+    }
+    throw new Error("Failed to update user.");
   }
 };

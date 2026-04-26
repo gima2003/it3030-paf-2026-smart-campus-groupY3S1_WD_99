@@ -83,6 +83,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         equipment.setEquipmentType(requestDto.getEquipmentType());
         equipment.setQuantity(requestDto.getQuantity());
         equipment.setStatus(requestDto.getStatus());
+        equipment.setCurrentLocation(requestDto.getCurrentLocation());
 
         // DTO field "active" -> entity field "isBookable"
         equipment.setIsBookable(requestDto.getActive() != null ? requestDto.getActive() : true);
@@ -110,6 +111,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         dto.setEquipmentType(equipment.getEquipmentType());
         dto.setQuantity(equipment.getQuantity());
         dto.setStatus(equipment.getStatus());
+        dto.setCurrentLocation(equipment.getCurrentLocation());
 
         // entity field "isBookable" -> DTO field "active"
         dto.setActive(equipment.getIsBookable());

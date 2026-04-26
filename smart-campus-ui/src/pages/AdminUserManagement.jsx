@@ -3,6 +3,11 @@ import { createUser, getAllUsers, getUserStats, updateUserStatus, deleteUser } f
 import { useToast } from "../context/ToastContext";
 import AdminEditUserModal from "../components/AdminEditUserModal";
 import AdminViewUserModal from "../components/AdminViewUserModal";
+import Swal from 'sweetalert2';
+import { 
+  validateName, validateEmail, validatePhone, validateCity, 
+  validateStudentId, validateEmployeeId, validateRequired 
+} from "../utils/validation";
 
 function AdminUserManagement() {
   const { showToast } = useToast();
@@ -43,6 +48,7 @@ function AdminUserManagement() {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (activeTab === "VIEW") {
@@ -66,13 +72,97 @@ function AdminUserManagement() {
     }
   };
 
+  const validateField = (name, value, currentRole = formData.role) => {
+    let error = "";
+    switch (name) {
+      case "firstName":
+      case "lastName":
+        error = validateName(value);
+        break;
+      case "email":
+        error = validateEmail(value);
+        break;
+      case "phone":
+        error = validatePhone(value);
+        break;
+      case "city":
+        error = validateCity(value);
+        break;
+      case "studentId":
+        if (currentRole === "STUDENT") error = validateStudentId(value);
+        break;
+      case "employeeId":
+        if (["LECTURER", "MANAGER", "TECHNICIAN"].includes(currentRole)) error = validateEmployeeId(value);
+        break;
+      case "batchYear":
+      case "faculty":
+      case "department":
+      case "specialization":
+      case "designation":
+      case "officeLocation":
+        error = validateRequired(value);
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+    return error === "";
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    const check = (name, value) => {
+      if (!validateField(name, value, formData.role)) isValid = false;
+    };
+
+    check("firstName", formData.firstName);
+    check("lastName", formData.lastName);
+    check("email", formData.email);
+    check("phone", formData.phone);
+    check("city", formData.city);
+
+    if (formData.role === "STUDENT") {
+      check("studentId", formData.studentId);
+      check("batchYear", formData.batchYear);
+      check("faculty", formData.faculty);
+      check("department", formData.department);
+    }
+    if (["LECTURER", "MANAGER", "TECHNICIAN"].includes(formData.role)) {
+      check("employeeId", formData.employeeId);
+      check("department", formData.department);
+    }
+    if (["LECTURER", "TECHNICIAN"].includes(formData.role)) {
+      check("specialization", formData.specialization);
+    }
+    if (formData.role === "LECTURER") {
+      check("designation", formData.designation);
+    }
+    if (formData.role === "MANAGER") {
+      check("officeLocation", formData.officeLocation);
+    }
+
+    return isValid;
+  };
+
   const handleInputChange = (e) => {
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+    const name = e.target.name;
+    setFormData({ ...formData, [name]: value });
+    
+    if (name === "role") {
+      setErrors({}); // Clear errors when changing roles
+    } else {
+      validateField(name, value);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      showToast("Please fix the errors in the form", "error");
+      return;
+    }
+    
     setLoading(true);
 
     const payload = { ...formData };
@@ -105,14 +195,25 @@ function AdminUserManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this user?")) return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This user will be permanently removed.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete"
+    });
+
+    if (!result.isConfirmed) return;
+
     setActionLoading(id);
     try {
       await deleteUser(id);
-      showToast("User deleted successfully", "success");
+      Swal.fire("Deleted!", "User has been deleted successfully.", "success");
       await fetchData();
     } catch (err) {
-      showToast("Failed to delete user", "error");
+      Swal.fire("Error!", "Failed to delete user. Please try again.", "error");
     } finally {
       setActionLoading(null);
     }
@@ -302,23 +403,28 @@ function AdminUserManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">First Name</label>
-                  <input required name="firstName" value={formData.firstName} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  <input required name="firstName" value={formData.firstName} onChange={handleInputChange} onBlur={(e) => validateField("firstName", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  {errors.firstName && <p className="text-red-400 text-xs mt-1">{errors.firstName}</p>}
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Last Name</label>
-                  <input required name="lastName" value={formData.lastName} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  <input required name="lastName" value={formData.lastName} onChange={handleInputChange} onBlur={(e) => validateField("lastName", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  {errors.lastName && <p className="text-red-400 text-xs mt-1">{errors.lastName}</p>}
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Email</label>
-                  <input required type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  <input required type="email" name="email" value={formData.email} onChange={handleInputChange} onBlur={(e) => validateField("email", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Phone</label>
-                  <input required name="phone" value={formData.phone} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  <input required name="phone" value={formData.phone} onChange={handleInputChange} onBlur={(e) => validateField("phone", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">City</label>
-                  <input required name="city" value={formData.city} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  <input required name="city" value={formData.city} onChange={handleInputChange} onBlur={(e) => validateField("city", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                  {errors.city && <p className="text-red-400 text-xs mt-1">{errors.city}</p>}
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Role</label>
@@ -349,26 +455,29 @@ function AdminUserManagement() {
                   <>
                     <div>
                       <label className="block text-sm text-gray-400 mb-1">Student ID</label>
-                      <input required name="studentId" value={formData.studentId} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                      <input required name="studentId" value={formData.studentId} onChange={handleInputChange} onBlur={(e) => validateField("studentId", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                      {errors.studentId && <p className="text-red-400 text-xs mt-1">{errors.studentId}</p>}
                     </div>
                     <div>
                       <label className="block text-sm text-gray-400 mb-1">Batch Year</label>
-                      <select required name="batchYear" value={formData.batchYear} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
+                      <select required name="batchYear" value={formData.batchYear} onChange={handleInputChange} onBlur={(e) => validateField("batchYear", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
                         <option value="">Select Batch Year</option>
                         <option value="Y1">Y1</option>
                         <option value="Y2">Y2</option>
                         <option value="Y3">Y3</option>
                         <option value="Y4">Y4</option>
                       </select>
+                      {errors.batchYear && <p className="text-red-400 text-xs mt-1">{errors.batchYear}</p>}
                     </div>
                     <div>
                       <label className="block text-sm text-gray-400 mb-1">Faculty</label>
-                      <select required name="faculty" value={formData.faculty} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
+                      <select required name="faculty" value={formData.faculty} onChange={handleInputChange} onBlur={(e) => validateField("faculty", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
                         <option value="">Select Faculty</option>
                         <option value="COMPUTING">COMPUTING</option>
                         <option value="BUSINESS">BUSINESS</option>
                         <option value="ENGINEERING">ENGINEERING</option>
                       </select>
+                      {errors.faculty && <p className="text-red-400 text-xs mt-1">{errors.faculty}</p>}
                     </div>
                   </>
                 )}
@@ -377,7 +486,8 @@ function AdminUserManagement() {
                 {["LECTURER", "MANAGER", "TECHNICIAN"].includes(formData.role) && (
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">Employee ID</label>
-                    <input required name="employeeId" value={formData.employeeId} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                    <input required name="employeeId" value={formData.employeeId} onChange={handleInputChange} onBlur={(e) => validateField("employeeId", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                    {errors.employeeId && <p className="text-red-400 text-xs mt-1">{errors.employeeId}</p>}
                   </div>
                 )}
 
@@ -385,7 +495,7 @@ function AdminUserManagement() {
                 {["STUDENT", "LECTURER", "MANAGER", "TECHNICIAN"].includes(formData.role) && (
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">Department</label>
-                    <select required name="department" value={formData.department} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
+                    <select required name="department" value={formData.department} onChange={handleInputChange} onBlur={(e) => validateField("department", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
                       <option value="">Select Department</option>
                       <option value="IT">IT</option>
                       <option value="CS">CS</option>
@@ -399,6 +509,7 @@ function AdminUserManagement() {
                       <option value="MAINTENANCE">MAINTENANCE</option>
                       <option value="COMPUTING">COMPUTING</option>
                     </select>
+                    {errors.department && <p className="text-red-400 text-xs mt-1">{errors.department}</p>}
                   </div>
                 )}
 
@@ -406,7 +517,8 @@ function AdminUserManagement() {
                 {["LECTURER", "TECHNICIAN"].includes(formData.role) && (
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">Specialization</label>
-                    <input required name="specialization" value={formData.specialization} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                    <input required name="specialization" value={formData.specialization} onChange={handleInputChange} onBlur={(e) => validateField("specialization", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                    {errors.specialization && <p className="text-red-400 text-xs mt-1">{errors.specialization}</p>}
                   </div>
                 )}
 
@@ -414,12 +526,13 @@ function AdminUserManagement() {
                 {formData.role === "LECTURER" && (
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">Designation</label>
-                    <select required name="designation" value={formData.designation} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
+                    <select required name="designation" value={formData.designation} onChange={handleInputChange} onBlur={(e) => validateField("designation", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors">
                       <option value="">Select Designation</option>
                       <option value="ASSISTANT_LECTURER">Assistant Lecturer</option>
                       <option value="SENIOR_LECTURER">Senior Lecturer</option>
                       <option value="LAB_ASSISTANT">Lab Assistant</option>
                     </select>
+                    {errors.designation && <p className="text-red-400 text-xs mt-1">{errors.designation}</p>}
                   </div>
                 )}
 
@@ -427,7 +540,8 @@ function AdminUserManagement() {
                 {formData.role === "MANAGER" && (
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">Office Location</label>
-                    <input required name="officeLocation" value={formData.officeLocation} onChange={handleInputChange} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                    <input required name="officeLocation" value={formData.officeLocation} onChange={handleInputChange} onBlur={(e) => validateField("officeLocation", e.target.value)} className="w-full bg-[#000919] border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#0A6ED3] transition-colors" />
+                    {errors.officeLocation && <p className="text-red-400 text-xs mt-1">{errors.officeLocation}</p>}
                   </div>
                 )}
               </div>

@@ -14,6 +14,7 @@ public class EquipmentRequestDto {
     private AssetStatus status;
     private Boolean active;
     private List<Long> facilityIds;
+    private String currentLocation;
 
     public EquipmentRequestDto() {
     }
@@ -80,5 +81,13 @@ public class EquipmentRequestDto {
 
     public void setFacilityIds(List<Long> facilityIds) {
         this.facilityIds = facilityIds;
+    }
+
+    public String getCurrentLocation() {
+    return currentLocation;
+    }
+
+    public void setCurrentLocation(String currentLocation) {
+        this.currentLocation = currentLocation;
     }
 }

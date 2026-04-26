@@ -17,17 +17,39 @@ function AdminLayout() {
         toggleSidebar={toggleSidebar}
       />
 
-      <div className="flex flex-1 flex-col min-w-0">
-        <div className="shrink-0 border-b border-white/10 bg-[#000919]">
-          <AdminNavbar isSidebarOpen={isSidebarOpen} />
-        </div>
+      <div style={styles.main}>
+        <AdminNavbar />
 
-        <main className="flex-1 overflow-y-auto bg-[#000919] p-6 md:p-8">
+        <main style={styles.content}>
           <Outlet />
         </main>
       </div>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    display: "flex",
+    height: "100vh",
+    backgroundColor: "#000919",
+    color: "white",
+    fontFamily: "Arial, sans-serif",
+    overflow: "hidden",
+  },
+  main: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    backgroundColor: "#000919",
+    minWidth: 0,
+  },
+  content: {
+    flex: 1,
+    overflowY: "auto",
+    backgroundColor: "#000919",
+    padding: "24px",
+  },
+};
 
 export default AdminLayout;

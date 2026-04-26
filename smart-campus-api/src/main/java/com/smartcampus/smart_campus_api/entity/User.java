@@ -28,6 +28,13 @@ public class User {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    // ----- MFA Fields -----
+    @Column(name = "mfa_enabled")
+    private Boolean mfaEnabled = false;
+
+    @Column(name = "mfa_secret")
+    private String mfaSecret;
+
     // ----- Student Specific Fields -----
     @Column(name = "student_id")
     private String studentId;
@@ -93,6 +100,12 @@ public class User {
 
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+
+    public Boolean getMfaEnabled() { return mfaEnabled; }
+    public void setMfaEnabled(Boolean mfaEnabled) { this.mfaEnabled = mfaEnabled; }
+
+    public String getMfaSecret() { return mfaSecret; }
+    public void setMfaSecret(String mfaSecret) { this.mfaSecret = mfaSecret; }
 
     public String getStudentId() { return studentId; }
     public void setStudentId(String studentId) { this.studentId = studentId; }
