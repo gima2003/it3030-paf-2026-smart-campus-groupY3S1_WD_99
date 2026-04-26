@@ -57,10 +57,26 @@ public class TicketService {
             ticket.setDueAt(now.plusDays(5));
         }
 
-        return ticketRepository.save(ticket);
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        if (savedTicket.getCreatedByRole() != null && ("STUDENT".equalsIgnoreCase(savedTicket.getCreatedByRole()) || "LECTURER".equalsIgnoreCase(savedTicket.getCreatedByRole()))) {
+            String roleStr = "STUDENT".equalsIgnoreCase(savedTicket.getCreatedByRole()) ? "Student" : "Lecturer";
+            if (savedTicket.getCreatedByEmail() != null) {
+                userRepository.findByEmail(savedTicket.getCreatedByEmail()).ifPresent(user -> {
+                String userName = ((user.getFirstName() != null ? user.getFirstName() : "") + " " + (user.getLastName() != null ? user.getLastName() : "")).trim();
+                if (userName.isEmpty()) userName = "User";
+                String title = "New Ticket Submitted";
+                String message = userName + " (" + roleStr + ") submitted a new ticket: " + savedTicket.getTitle();
+                String actionUrl = "/admin/tickets";
+
+                notificationService.createSystemNotificationForAdmins(title, message, "TICKET", actionUrl);
+            });
+            }
+        }
+
+        return savedTicket;
     }
 
-    // Get all tickets (raw entity if needed internally)
     public List<Ticket> getAllTickets() {
         return ticketRepository.findAll();
     }
