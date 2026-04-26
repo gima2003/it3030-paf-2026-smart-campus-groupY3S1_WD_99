@@ -437,17 +437,19 @@ function BookingsSection({ bookings, onAddBooking }) {
       {open && (
         <div className="pb-5 space-y-3">
           {/* Add booking CTA */}
-          <button
-            type="button"
-            onClick={onAddBooking}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium
-              border border-dashed border-[#0A6ED3]/30 text-[#6CB6FF]/70
-              hover:border-[#0A6ED3]/60 hover:text-[#6CB6FF] hover:bg-[#0A6ED3]/5
-              transition-all"
-          >
-            <BookOpenCheck size={15} />
-            Add New Booking
-          </button>
+          {localStorage.getItem("role") !== "TECHNICIAN" && (
+            <button
+              type="button"
+              onClick={onAddBooking}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium
+                border border-dashed border-[#0A6ED3]/30 text-[#6CB6FF]/70
+                hover:border-[#0A6ED3]/60 hover:text-[#6CB6FF] hover:bg-[#0A6ED3]/5
+                transition-all"
+            >
+              <BookOpenCheck size={15} />
+              Add New Booking
+            </button>
+          )}
 
           {!bookings.length ? (
             <p className="text-sm text-white/30 text-center py-4">
@@ -847,18 +849,20 @@ export default function FacilityDetailsModal({
                       </span>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowTicket(true)}
-                    className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
-                      bg-amber-500/12 text-amber-300 border border-amber-500/25
-                      hover:bg-amber-500/22 hover:border-amber-500/45
-                      active:scale-[0.97] transition-all"
-                  >
-                    <Ticket size={14} />
-                    <span className="hidden sm:inline">Raise Ticket</span>
-                    <span className="sm:hidden">Ticket</span>
-                  </button>
+                  {localStorage.getItem("role") !== "TECHNICIAN" && (
+                    <button
+                      type="button"
+                      onClick={() => setShowTicket(true)}
+                      className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
+                        bg-amber-500/12 text-amber-300 border border-amber-500/25
+                        hover:bg-amber-500/22 hover:border-amber-500/45
+                        active:scale-[0.97] transition-all"
+                    >
+                      <Ticket size={14} />
+                      <span className="hidden sm:inline">Raise Ticket</span>
+                      <span className="sm:hidden">Ticket</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* ── Description ── */}

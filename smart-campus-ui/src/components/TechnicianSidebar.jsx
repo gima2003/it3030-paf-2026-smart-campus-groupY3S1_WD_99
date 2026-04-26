@@ -4,6 +4,7 @@ import {
   FaTools,
   FaHistory,
   FaBell,
+  FaBuilding,
 } from "react-icons/fa";
 
 function TechnicianSidebar() {
@@ -12,6 +13,7 @@ function TechnicianSidebar() {
   const navItems = [
     { name: "Dashboard", path: "/technician", icon: <FaTachometerAlt /> },
     { name: "My Tickets", path: "/technician/tickets", icon: <FaTools /> },
+    { name: "Facilities & Assets", path: "/technician/resources", icon: <FaBuilding /> },
     { name: "History", path: "/technician/history", icon: <FaHistory /> },
     { name: "Notifications", path: "/technician/notifications", icon: <FaBell /> },
   ];

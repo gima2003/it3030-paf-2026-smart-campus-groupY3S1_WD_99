@@ -115,7 +115,22 @@ public class BookingServiceImpl implements BookingService {
             booking.setFacility(null);
         }
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        if (user != null && ("STUDENT".equalsIgnoreCase(user.getRole()) || "LECTURER".equalsIgnoreCase(user.getRole()))) {
+            String roleStr = "STUDENT".equalsIgnoreCase(user.getRole()) ? "Student" : "Lecturer";
+            String userName = ((user.getFirstName() != null ? user.getFirstName() : "") + " " + (user.getLastName() != null ? user.getLastName() : "")).trim();
+            String resourceName = booking.getResourceType() == BookingResourceType.FACILITY && booking.getFacility() != null
+                ? booking.getFacility().getName()
+                : (booking.getEquipment() != null ? booking.getEquipment().getName() : "Resource");
+            String title = "New Booking Request";
+            String message = userName + " (" + roleStr + ") submitted a new booking request for " + resourceName + " on " + booking.getBookingDate() + ".";
+            String actionUrl = "/admin/booking-management";
+
+            notificationService.createSystemNotificationForAdmins(title, message, "BOOKING", actionUrl);
+        }
+
+        return mapToDto(savedBooking);
     }
 
     @Override

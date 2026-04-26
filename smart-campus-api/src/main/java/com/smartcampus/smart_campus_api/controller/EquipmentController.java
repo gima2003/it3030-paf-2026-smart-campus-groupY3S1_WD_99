@@ -6,6 +6,7 @@ import com.smartcampus.smart_campus_api.service.EquipmentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class EquipmentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipmentResponseDto> createEquipment(@RequestBody EquipmentRequestDto requestDto) {
         EquipmentResponseDto response = equipmentService.createEquipment(requestDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -39,6 +41,7 @@ public class EquipmentController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipmentResponseDto> updateEquipment(@PathVariable Long id,
                                                                 @RequestBody EquipmentRequestDto requestDto) {
         EquipmentResponseDto updatedEquipment = equipmentService.updateEquipment(id, requestDto);
@@ -46,6 +49,7 @@ public class EquipmentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteEquipment(@PathVariable Long id) {
         equipmentService.deleteEquipment(id);
         return ResponseEntity.ok("Equipment deleted successfully");

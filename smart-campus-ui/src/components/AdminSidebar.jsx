@@ -15,12 +15,15 @@ import {
 function AdminSidebar() {
   const location = useLocation();
   const [hasUnreadBookingNotif, setHasUnreadBookingNotif] = useState(false);
+  const [hasUnreadTicketNotif, setHasUnreadTicketNotif] = useState(false);
 
   useEffect(() => {
     const handleFetched = (e) => {
       const list = e.detail;
-      const unreadBooking = list.some(n => !n.isRead && n.title.toLowerCase().includes('booking'));
+      const unreadBooking = list.some(n => !n.isRead && (n.type === 'BOOKING' || n.title.toLowerCase().includes('booking')));
+      const unreadTicket = list.some(n => !n.isRead && (n.type === 'TICKET' || n.title.toLowerCase().includes('ticket')));
       setHasUnreadBookingNotif(unreadBooking);
+      setHasUnreadTicketNotif(unreadTicket);
     };
     window.addEventListener("notificationsFetched", handleFetched);
     return () => window.removeEventListener("notificationsFetched", handleFetched);
@@ -31,7 +34,7 @@ function AdminSidebar() {
     { name: "User Management", path: "/admin/users", icon: <FaUsers /> },
     { name: "Facilities & Assets", path: "/admin/resources", icon: <FaBuilding /> },
     { name: "Booking Management", path: "/admin/booking-management", icon: <FaCalendarCheck />, showDot: hasUnreadBookingNotif },
-    { name: "Tickets Management", path: "/admin/tickets", icon: <FaTools /> },
+    { name: "Tickets Management", path: "/admin/tickets", icon: <FaTools />, showDot: hasUnreadTicketNotif },
     { name: "Technicians Management", path: "/admin/technicians", icon: <FaUserCog /> },
     { name: "Notifications", path: "/admin/notifications", icon: <FaBell /> },
     { name: "Analytics", path: "/admin/analytics", icon: <FaChartBar /> },

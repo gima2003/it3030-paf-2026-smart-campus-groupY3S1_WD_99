@@ -151,6 +151,43 @@ public class NotificationService {
             }
         });
     }
+
+    @Transactional
+    public void createSystemNotificationForAdmins(String title, String message, String typeStr, String actionUrl) {
+        List<User> admins = userRepository.findByRole("ADMIN");
+        if (admins == null || admins.isEmpty()) return;
+
+        AdminNotification notification = new AdminNotification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        try {
+            notification.setType(com.smartcampus.smart_campus_api.enums.NotificationType.valueOf(typeStr));
+        } catch (Exception e) {
+            notification.setType(com.smartcampus.smart_campus_api.enums.NotificationType.SYSTEM);
+        }
+        notification.setPriority(NotificationPriority.HIGH);
+        notification.setTargetAudience(TargetAudienceType.ALL_ADMINS);
+        notification.setActionUrl(actionUrl);
+        notification.setPinned(false);
+        notification.setStartDate(LocalDateTime.now());
+        notification.setCreatedBy(1L); 
+        notification.setStatus(NotificationStatus.SENT);
+        notification.setSentAt(LocalDateTime.now());
+
+        AdminNotification savedNotification = adminNotificationRepo.save(notification);
+
+        List<UserNotification> userNotifications = admins.stream()
+            .filter(admin -> admin.getIsActive() != null && admin.getIsActive())
+            .map(admin -> {
+                UserNotification un = new UserNotification();
+                un.setNotification(savedNotification);
+                un.setRecipientUserId(admin.getId());
+                return un;
+            }).collect(Collectors.toList());
+
+        userNotificationRepo.saveAll(userNotifications);
+        // Explicitly no email sent for this
+    }
     
     public List<AdminNotification> getAllAdminNotifications() {
         return adminNotificationRepo.findAll();

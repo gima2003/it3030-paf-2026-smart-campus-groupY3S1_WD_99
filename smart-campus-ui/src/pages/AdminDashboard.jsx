@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { getAllBookings } from "../services/bookingService";
+import { FaSync } from "react-icons/fa";
 
 function AdminDashboard() {
   const API = "http://localhost:8081";
@@ -21,6 +22,9 @@ function AdminDashboard() {
   facilities: 0,
   equipment: 0,
 });
+  const [openTicketsCount, setOpenTicketsCount] = useState(0);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -35,9 +39,76 @@ function AdminDashboard() {
     fetchAnalytics();
   }, []);
 
-  // ✅ NEW useEffect (only addition)
+
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      // Fetch bookings
+      let bookings = [];
+      try {
+        const bookingsData = await getAllBookings();
+        if (Array.isArray(bookingsData)) {
+          bookings = bookingsData;
+          setPendingBookings(bookings.filter((b) => b.status === "PENDING").length);
+        } else {
+          setPendingBookings(0);
+        }
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        setPendingBookings(0);
+      }
+
+      // Fetch tickets
+      let tickets = [];
+      try {
+        const ticketsRes = await axios.get(`${API}/api/tickets`);
+        if (ticketsRes.data && Array.isArray(ticketsRes.data)) {
+          tickets = ticketsRes.data;
+          setOpenTicketsCount(tickets.filter((t) => t.status === "OPEN" || t.status === "IN_PROGRESS").length);
+        } else {
+          setOpenTicketsCount(0);
+        }
+      } catch (err) {
+        console.error("Error fetching tickets:", err);
+        setOpenTicketsCount(0);
+      }
+
+      // Combine and format recent activity
+      let activities = [];
+
+      bookings.forEach((b) => {
+        activities.push({
+          id: `b-${b.id}`,
+          type: "Booking",
+          message: `Booking for ${b.resourceName || "Resource"} by ${b.userName || "User"}`,
+          status: b.status,
+          date: new Date(b.createdAt || b.bookingDate || Date.now()),
+        });
+      });
+
+      tickets.forEach((t) => {
+        activities.push({
+          id: `t-${t.id}`,
+          type: "Ticket",
+          message: `Ticket #${t.id} - ${t.title || t.issueType || "Maintenance"}`,
+          status: t.status,
+          date: new Date(t.createdAt || Date.now()),
+        });
+      });
+
+      // Sort by date descending
+      activities.sort((a, b) => b.date - a.date);
+      setRecentActivity(activities.slice(0, 5));
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchPendingBookings();
+    fetchDashboardData();
   }, []);
 
   useEffect(() => {
@@ -57,6 +128,21 @@ function AdminDashboard() {
     } catch (error) {
       console.error("Error fetching pending bookings:", error);
       setPendingBookings(0);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "APPROVED":
+      case "RESOLVED":
+        return "text-green-400 bg-green-400/10";
+      case "PENDING":
+      case "OPEN":
+        return "text-yellow-400 bg-yellow-400/10";
+      case "REJECTED":
+      case "CANCELLED":
+        return "text-red-400 bg-red-400/10";
+      case "IN_PROGRESS":
+        return "text-[#0A6ED3] bg-[#0A6ED3]/10";
+      default:
+        return "text-gray-400 bg-gray-400/10";
     }
   };
 
@@ -119,7 +205,7 @@ function AdminDashboard() {
 
         <div className="bg-[#0B1220] p-6 rounded-2xl border border-white/10 hover:border-[#0A6ED3] transition">
           <h3 className="text-gray-400 text-sm">Open Tickets</h3>
-          <p className="text-3xl font-bold mt-2 text-white">4</p>
+          <p className="text-3xl font-bold mt-2 text-white">{openTicketsCount}</p>
           <span className="text-xs text-gray-500 mt-2 block">
             Maintenance Issues
           </span>
@@ -214,26 +300,51 @@ function AdminDashboard() {
 
       {/* Activity Section */}
       <div className="mt-10">
-        <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Recent Activity</h3>
+          <button
+            onClick={fetchDashboardData}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition"
+          >
+            <FaSync className={loading ? "animate-spin" : ""} /> Refresh
+          </button>
+        </div>
 
         <div className="bg-[#0B1220] p-6 rounded-2xl border border-white/10">
-          <ul className="space-y-3 text-gray-300 text-sm">
-            <li className="border-b border-white/5 pb-2">
-              Booking for Lecture Hall A approved
-            </li>
-
-            <li className="border-b border-white/5 pb-2">
-              Ticket #12 assigned to Technician IT-02
-            </li>
-
-            <li className="border-b border-white/5 pb-2">
-              Lab 3 marked OUT_OF_SERVICE
-            </li>
-
-            <li>
-              New booking request for DSLR Camera #4
-            </li>
-          </ul>
+          {loading ? (
+            <p className="text-gray-400 text-sm">Loading activity...</p>
+          ) : recentActivity.length === 0 ? (
+            <p className="text-gray-400 text-sm">No recent activity found.</p>
+          ) : (
+            <ul className="space-y-4 text-gray-300 text-sm">
+              {recentActivity.map((activity, index) => (
+                <li
+                  key={activity.id}
+                  className={`flex justify-between items-start pb-3 ${
+                    index !== recentActivity.length - 1
+                      ? "border-b border-white/5"
+                      : ""
+                  }`}
+                >
+                  <div>
+                    <span className="text-white font-medium block mb-1">
+                      {activity.message}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {activity.date.toLocaleString()}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs rounded font-medium ${getStatusColor(
+                      activity.status
+                    )}`}
+                  >
+                    {activity.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
