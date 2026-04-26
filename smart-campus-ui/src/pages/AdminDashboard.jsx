@@ -3,6 +3,7 @@ import axios from "axios";
 import { getAllBookings } from "../services/bookingService";
 import { FaSync } from "react-icons/fa";
 
+
 function AdminDashboard() {
   const API = "http://localhost:8081";
 
@@ -128,6 +129,9 @@ function AdminDashboard() {
     } catch (error) {
       console.error("Error fetching pending bookings:", error);
       setPendingBookings(0);
+    }
+  };
+  
   const getStatusColor = (status) => {
     switch (status) {
       case "APPROVED":
