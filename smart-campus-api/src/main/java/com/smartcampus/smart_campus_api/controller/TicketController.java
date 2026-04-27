@@ -5,6 +5,7 @@ import com.smartcampus.smart_campus_api.dto.TicketResponse;
 import com.smartcampus.smart_campus_api.entity.Ticket;
 import com.smartcampus.smart_campus_api.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,58 +20,70 @@ public class TicketController {
 
     // 1. Create Ticket (Student)
     @PostMapping
-    public Ticket createTicket(@RequestBody Ticket ticket) {
-        return ticketService.createTicket(ticket);
+    public ResponseEntity<Ticket> createTicket(@RequestBody Ticket ticket) {
+        Ticket created = ticketService.createTicket(ticket);
+        return ResponseEntity.status(201).body(created); // ✅ 201 CREATED
     }
 
     // 2. Get all tickets (Admin)
     @GetMapping
-    public List<TicketResponse> getAllTickets() {
-        return ticketService.getAllTicketResponses();
+    public ResponseEntity<List<TicketResponse>> getAllTickets() {
+        return ResponseEntity.ok(ticketService.getAllTicketResponses()); // ✅ 200 OK
     }
 
-    // 3. Get tickets by user (Student / Lecturer)
+    // 3. Get tickets by user
     @GetMapping("/user/{email}")
-    public List<TicketResponse> getUserTickets(@PathVariable String email) {
-        return ticketService.getTicketResponsesByUser(email);
+    public ResponseEntity<List<TicketResponse>> getUserTickets(@PathVariable String email) {
+        List<TicketResponse> tickets = ticketService.getTicketResponsesByUser(email);
+        if (tickets.isEmpty()) {
+            return ResponseEntity.status(404).build(); // ✅ 404 NOT FOUND
+        }
+        return ResponseEntity.ok(tickets); // ✅ 200 OK
     }
 
     // 4. Get technician tickets
     @GetMapping("/technician/{email}")
-    public List<TicketResponse> getTechnicianTickets(@PathVariable String email) {
-        return ticketService.getTicketResponsesForTechnician(email);
+    public ResponseEntity<List<TicketResponse>> getTechnicianTickets(@PathVariable String email) {
+        List<TicketResponse> tickets = ticketService.getTicketResponsesForTechnician(email);
+        if (tickets.isEmpty()) {
+            return ResponseEntity.status(404).build(); // ✅ 404
+        }
+        return ResponseEntity.ok(tickets); // ✅ 200
     }
 
     // 5. Ticket SLA analytics summary
     @GetMapping("/analytics/summary")
-    public TicketAnalyticsResponse getTicketAnalyticsSummary() {
-        return ticketService.getTicketAnalyticsSummary();
+    public ResponseEntity<TicketAnalyticsResponse> getTicketAnalyticsSummary() {
+        return ResponseEntity.ok(ticketService.getTicketAnalyticsSummary()); // ✅ 200
     }
 
     // 6. Assign technician (Admin)
     @PutMapping("/{id}/assign")
-    public Ticket assignTechnician(
+    public ResponseEntity<Ticket> assignTechnician(
             @PathVariable Long id,
             @RequestParam String technicianEmail
     ) {
-        return ticketService.assignTechnician(id, technicianEmail);
+        Ticket updated = ticketService.assignTechnician(id, technicianEmail);
+        return ResponseEntity.ok(updated); // ✅ 200 OK
     }
 
-    // 7. Update status (Admin / Technician)
+    // 7. Update status
     @PutMapping("/{id}/status")
-    public Ticket updateStatus(
+    public ResponseEntity<Ticket> updateStatus(
             @PathVariable Long id,
             @RequestParam String status
     ) {
-        return ticketService.updateStatus(id, status);
+        Ticket updated = ticketService.updateStatus(id, status);
+        return ResponseEntity.ok(updated); // ✅ 200 OK
     }
 
-    // 8. Edit ticket (Student) -> only allowed when status = OPEN
+    // 8. Edit ticket
     @PutMapping("/{id}")
-    public Ticket updateTicket(
+    public ResponseEntity<Ticket> updateTicket(
             @PathVariable Long id,
             @RequestBody Ticket updatedTicket
     ) {
-        return ticketService.updateTicket(id, updatedTicket);
+        Ticket updated = ticketService.updateTicket(id, updatedTicket);
+        return ResponseEntity.ok(updated); // ✅ 200 OK
     }
 }
